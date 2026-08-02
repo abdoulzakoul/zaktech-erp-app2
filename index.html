@@ -1,0 +1,1420 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>ZAKTECH ERP</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="theme-color" content="#2563EB">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ZAKTECH">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+:root{--blue:#2563EB;--blue-dark:#1D4ED8;--gray:#F1F3F7;--gray-mid:#E4E8F0;--ink:#0F172A;--ink-soft:#5B6478;--danger:#DC2626;--ok:#16A34A;--warn:#D97706;--radius:14px;--shadow:0 8px 24px -8px rgba(15,23,42,.12);}
+*{box-sizing:border-box}
+body{margin:0;font-family:'Inter',sans-serif;background:var(--gray);color:var(--ink);}
+h1,h2,h3,.brand{font-family:'Sora',sans-serif}
+.mono{font-family:'JetBrains Mono',monospace}
+.app{display:flex;min-height:100vh}
+.sidebar{width:235px;background:var(--ink);color:#fff;display:flex;flex-direction:column;flex-shrink:0;}
+.sidebar .brand{padding:20px;font-size:17px;font-weight:800;border-bottom:1px solid rgba(255,255,255,.08);display:flex;align-items:center;gap:10px;word-break:break-word}
+.brand img{width:28px;height:28px;object-fit:contain;border-radius:6px;background:#fff;padding:2px;flex-shrink:0}
+.brand .dot{width:10px;height:10px;border-radius:3px;background:var(--blue);flex-shrink:0}
+.nav{padding:10px;overflow-y:auto;flex:1}
+.nav button{width:100%;text-align:left;background:none;border:0;color:#C7CDDB;padding:9px 12px;border-radius:9px;font-size:13px;cursor:pointer;margin-bottom:1px;display:flex;align-items:center;gap:9px;font-weight:500}
+.nav button:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav button.active{background:var(--blue);color:#fff}
+.nav .nav-sep{padding:8px 12px 4px;font-size:10px;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:.6px}
+.main{flex:1;padding:26px 32px;overflow-y:auto}
+.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px}
+.topbar h1{font-size:22px;margin:0}
+.pill{background:#fff;padding:6px 12px;border-radius:20px;font-size:12px;color:var(--ink-soft);box-shadow:var(--shadow)}
+.grid{display:grid;gap:16px}
+.kpis{grid-template-columns:repeat(auto-fit,minmax(170px,1fr));margin-bottom:20px}
+.card{background:#fff;border-radius:var(--radius);padding:18px 20px;box-shadow:var(--shadow)}
+.kpi .label{font-size:11px;color:var(--ink-soft);font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+.kpi .value{font-size:24px;font-weight:800;margin-top:6px;font-family:'Sora',sans-serif}
+.kpi .value.blue{color:var(--blue)}.kpi .value.ok{color:var(--ok)}.kpi .value.danger{color:var(--danger)}
+.charts{grid-template-columns:1fr 1fr}
+.panel-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.panel-title h2{font-size:16px;margin:0}
+button.btn{background:var(--blue);color:#fff;border:0;padding:9px 16px;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;transition:.15s}
+button.btn:hover{background:var(--blue-dark)}
+button.btn.ghost{background:#fff;color:var(--blue);border:1px solid var(--gray-mid)}
+button.btn.danger{background:var(--danger)}button.btn.ok{background:var(--ok)}
+button.btn.sm{padding:5px 10px;font-size:12px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;color:var(--ink-soft);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.3px;padding:8px 10px;border-bottom:1px solid var(--gray-mid)}
+td{padding:8px 10px;border-bottom:1px solid #F0F1F5}
+tr:hover td{background:#FAFBFD}
+input,select,textarea{border:1px solid var(--gray-mid);border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit;width:100%;background:#fff;color:var(--ink)}
+label{font-size:11px;color:var(--ink-soft);font-weight:600;text-transform:uppercase;letter-spacing:.3px;display:block;margin-bottom:4px}
+.formrow{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:14px}
+.toolbar{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center}
+.toolbar input[type=text],.toolbar input[type=search]{width:200px}
+.badge{padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;display:inline-block}
+.badge.ok{background:#DCFCE7;color:#166534}.badge.warn{background:#FEF3C7;color:#92400E}.badge.danger{background:#FEE2E2;color:#991B1B}.badge.info{background:#DBEAFE;color:#1E40AF}
+.modal-bg{position:fixed;inset:0;background:rgba(15,23,42,.45);display:none;align-items:center;justify-content:center;z-index:50}
+.modal-bg.open{display:flex}
+.modal{background:#fff;border-radius:16px;padding:24px;width:540px;max-width:94vw;max-height:88vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+.modal h3{margin-top:0}
+.modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}
+.toast{position:fixed;bottom:22px;right:22px;background:var(--ink);color:#fff;padding:12px 18px;border-radius:10px;font-size:13px;box-shadow:var(--shadow);opacity:0;transform:translateY(10px);transition:.25s;z-index:99}
+.toast.show{opacity:1;transform:translateY(0)}
+.empty{padding:40px;text-align:center;color:var(--ink-soft);font-size:13px}
+.section-hint{color:var(--ink-soft);font-size:12.5px;margin-bottom:16px}
+input.invalid,select.invalid,textarea.invalid{border-color:var(--danger)!important;box-shadow:0 0 0 3px rgba(220,38,38,.15)}
+.acc-group{border:1px solid var(--gray-mid);border-radius:10px;margin-bottom:10px;overflow:hidden}
+.acc-header{width:100%;display:flex;justify-content:space-between;align-items:center;background:#fafbfd;border:0;padding:12px 14px;font-size:13px;font-weight:700;cursor:pointer;color:var(--ink);font-family:inherit}
+.acc-header:hover{background:#f2f4f8}
+.acc-count{color:var(--ink-soft);font-weight:500;font-size:12px}
+.acc-chevron{transition:transform .2s;color:var(--ink-soft);font-size:12px}
+.acc-header.open .acc-chevron{transform:rotate(180deg)}
+.acc-body{display:none;padding:10px 14px 14px;border-top:1px solid var(--gray-mid)}
+.acc-body.open{display:block}
+.hamburger{display:none;background:none;border:0;font-size:22px;line-height:1;color:var(--ink);cursor:pointer;padding:6px 8px;margin-right:8px;border-radius:8px}
+.hamburger:active{background:var(--gray-mid)}
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:59}
+.sidebar-overlay.open{display:block}
+.card{overflow-x:auto;-webkit-overflow-scrolling:touch}
+
+/* ===== RESPONSIVE MOBILE ===== */
+@media (max-width:860px){
+  .hamburger{display:inline-flex;align-items:center}
+  .sidebar{position:fixed;top:0;left:0;height:100vh;z-index:60;transform:translateX(-100%);transition:transform .25s ease;width:250px;max-width:82vw;box-shadow:0 0 30px rgba(0,0,0,.3)}
+  .sidebar.open{transform:translateX(0)}
+  .main{padding:14px}
+  .topbar{margin-bottom:16px;flex-wrap:wrap;gap:8px}
+  .topbar h1{font-size:17px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .charts{grid-template-columns:1fr}
+  .kpis{grid-template-columns:repeat(2,1fr)}
+  .toolbar{gap:8px}
+  .toolbar input[type=text],.toolbar input[type=search]{width:100%;flex:1 1 100%}
+  button.btn{padding:10px 14px}
+  table{font-size:12.5px}
+  th,td{padding:7px 8px;white-space:nowrap}
+  .modal{padding:18px}
+  .formrow{grid-template-columns:1fr}
+  .card{padding:14px 16px}
+}
+@media (max-width:420px){
+  .kpis{grid-template-columns:1fr}
+  .topbar h1{font-size:15px}
+  .pill{font-size:10.5px;padding:5px 9px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+  <div class="sidebar" id="sidebar">
+    <div class="brand" id="brandBox"><span class="dot"></span>ZAKTECH ERP</div>
+    <div class="nav" id="nav"></div>
+  </div>
+  <div class="main">
+    <div class="topbar"><div style="display:flex;align-items:center;min-width:0"><button class="hamburger" id="hamburgerBtn" aria-label="Menu">☰</button><h1 id="pageTitle">Tableau de bord</h1></div><div class="pill" id="clock"></div></div>
+    <div id="content"></div>
+  </div>
+</div>
+<div class="modal-bg" id="modalBg"><div class="modal" id="modalBody"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ===== UTILITAIRES ===== */
+const DB_KEY = 'zaktech_erp_v3';
+const uid = () => Math.random().toString(36).slice(2,9).toUpperCase();
+const todayISO = () => new Date().toISOString().slice(0,10);
+const fmt = n => Math.round(Number(n)||0).toString().replace(/\B(?=(\d{3})+(?!\d))/g,' ') + ' FCFA';
+function toast(msg,type=''){const t=document.getElementById('toast');t.textContent=msg;t.style.background=type==='ok'?'#16A34A':type==='warn'?'#D97706':'#0F172A';t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show'),2600);}
+function openModal(html){document.getElementById('modalBody').innerHTML=html;document.getElementById('modalBg').classList.add('open');}
+function closeModal(){document.getElementById('modalBg').classList.remove('open');}
+document.getElementById('modalBg').addEventListener('click',e=>{if(e.target.id==='modalBg')closeModal();});
+
+/* ===== COULEURS DE L'APPLICATION ===== */
+function darkenColor(hex,percent){
+  hex=(hex||'#2563EB').replace('#','');
+  if(hex.length===3)hex=hex.split('').map(c=>c+c).join('');
+  const num=parseInt(hex,16)||0;
+  let r=(num>>16)&255,g=(num>>8)&255,b=num&255;
+  r=Math.max(0,Math.round(r*(1-percent)));g=Math.max(0,Math.round(g*(1-percent)));b=Math.max(0,Math.round(b*(1-percent)));
+  return '#'+[r,g,b].map(x=>x.toString(16).padStart(2,'0')).join('');
+}
+function applyColors(){
+  const c=(DATA.settings&&DATA.settings.colors)||{};
+  const root=document.documentElement;
+  const primary=c.primary||'#2563EB';
+  root.style.setProperty('--blue',primary);
+  root.style.setProperty('--blue-dark',darkenColor(primary,0.15));
+  root.style.setProperty('--ok',c.ok||'#16A34A');
+  root.style.setProperty('--danger',c.danger||'#DC2626');
+  root.style.setProperty('--warn',c.warn||'#D97706');
+}
+
+/* ===== DONNÉES ===== */
+function defaultData(){
+  return {
+    settings:{nom:'ZAKTECH',adresse:'Niamey, Niger',tel:'',whatsapp:'',email:'',site:'',devise:'FCFA',tva:0,dark:false,logo:'',secCode:'',colors:{primary:'#2563EB',ok:'#16A34A',danger:'#DC2626',warn:'#D97706'}},
+    clients:[],formations:[],inscriptions:[],paiements:[],caisse:[],
+    impressions:[],graphisme:[],maintenance:[],stock:[],fournisseurs:[],employes:[],
+    factures:[],services:[],ventes:[],
+    modulesPerso:[],
+    customData:{},
+    hiddenModules:[],
+    moduleLabels:{},
+    impressionServices:[
+      {id:'is1',nom:'Impression N&B'},
+      {id:'is2',nom:'Impression Couleur'},
+      {id:'is3',nom:'Photocopie N&B'},
+      {id:'is4',nom:'Photocopie Couleur'},
+      {id:'is5',nom:'Scan'},
+      {id:'is6',nom:'Reliure'},
+      {id:'is7',nom:'Plastification'},
+      {id:'is8',nom:'Photo Minute'}
+    ]
+  };
+}
+let DATA;
+try{DATA=JSON.parse(localStorage.getItem(DB_KEY)||'null')||defaultData();}
+catch(e){DATA=defaultData();}
+// Migration
+(function(){const def=defaultData();Object.keys(def).forEach(k=>{if(DATA[k]===undefined)DATA[k]=def[k];});if(DATA.settings)Object.keys(def.settings).forEach(k=>{if(DATA.settings[k]===undefined)DATA.settings[k]=def.settings[k];});})();
+
+let STORAGE_OK = true;
+function save(){
+  try{localStorage.setItem(DB_KEY,JSON.stringify(DATA));}
+  catch(e){if(STORAGE_OK){STORAGE_OK=false;toast('⚠️ Sauvegarde impossible (stockage bloqué)','warn');}}
+}
+
+/* ===== CAISSE HELPER ===== */
+function addCaisse(type, libelle, montant, date=null){
+  DATA.caisse.push({id:uid(),type,libelle,montant:Number(montant)||0,date:date||todayISO()});
+}
+
+/* ===== NAVIGATION ===== */
+const MODULES_FIXES = [
+  {id:'dashboard',label:'Tableau de bord',icon:'📊',group:'main'},
+  {id:'clients',label:'Clients',icon:'👤',group:'main'},
+  {id:'formations',label:'Formations',icon:'🎓',group:'main'},
+  {id:'inscriptions',label:'Inscriptions',icon:'📝',group:'main'},
+  {id:'paiements',label:'Paiements',icon:'💳',group:'main'},
+  {id:'caisse',label:'Caisse',icon:'🗄️',group:'main'},
+  {id:'ventes',label:'Ventes',icon:'🛒',group:'ops'},
+  {id:'impressions',label:'Impressions & Photocopies',icon:'🖨️',group:'ops'},
+  {id:'graphisme',label:'Graphisme',icon:'🎨',group:'ops'},
+  {id:'maintenance',label:'Maintenance',icon:'🛠️',group:'ops'},
+  {id:'stock',label:'Stock',icon:'📦',group:'stock'},
+  {id:'fournisseurs',label:'Fournisseurs',icon:'🚚',group:'stock'},
+  {id:'employes',label:'Employés',icon:'🧑‍💼',group:'rh'},
+  {id:'factures',label:'Facturation',icon:'🧾',group:'fin'},
+  {id:'services',label:'Services',icon:'🧩',group:'fin'},
+  {id:'rapports',label:'Rapports',icon:'📈',group:'fin'},
+  {id:'parametres',label:'Paramètres',icon:'⚙️',group:'fin'},
+];
+let current='dashboard';
+let paramUnlocked=false;
+
+const GROUP_RANK={main:0,ops:1,stock:2,rh:3,fin:4};
+function renderNav(){
+  const nav=document.getElementById('nav');
+  const groupLabels={main:'',ops:'Opérations',stock:'Stock & Achats',rh:'Ressources Humaines',fin:'Finance & Admin'};
+  let html='';let lastGroup='';
+  const items=MODULES_FIXES
+    .filter(m=>!DATA.hiddenModules.includes(m.id))
+    .map(m=>{
+      const ov=DATA.moduleLabels[m.id];
+      return ov?{...m,label:ov.label||m.label,icon:ov.icon||m.icon}:{...m};
+    });
+  // Insérer les services dynamiques après dashboard
+  const dashI=items.findIndex(m=>m.id==='dashboard');
+  DATA.services.forEach((s,i)=>items.splice(dashI+1+i,0,{id:'svc_'+s.id,label:s.nom,icon:'🔹',group:'svc',dynamic:true}));
+  // Insérer chaque module personnalisé en haut de la section qu'il a choisie
+  ['ops','stock','rh','fin'].forEach(grp=>{
+    const mods=DATA.modulesPerso.filter(m=>(m.group||'fin')===grp);
+    if(!mods.length)return;
+    const rank=GROUP_RANK[grp];
+    let insertAt=items.findIndex(x=>(GROUP_RANK[x.group]!==undefined?GROUP_RANK[x.group]:-1)>=rank);
+    if(insertAt===-1)insertAt=items.length;
+    mods.slice().reverse().forEach(m=>{
+      items.splice(insertAt,0,{id:'mod_'+m.id,label:m.label,icon:m.icon||'📁',group:grp});
+    });
+  });
+  items.forEach(m=>{
+    if(m.group!==lastGroup&&m.group!=='svc'){html+=`<div class="nav-sep">${groupLabels[m.group]||''}</div>`;lastGroup=m.group;}
+    html+=`<button data-id="${m.id}" class="${m.id===current?'active':''}" style="${m.dynamic?'padding-left:28px;font-size:12px':''}"><span>${m.icon}</span>${m.label}</button>`;
+  });
+  nav.innerHTML=html;
+  nav.querySelectorAll('button').forEach(b=>b.onclick=()=>{
+    current=b.dataset.id;render();
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('sidebarOverlay').classList.remove('open');
+  });
+}
+function updateBrand(){
+  const s=DATA.settings;
+  document.getElementById('brandBox').innerHTML=s.logo
+    ?`<img src="${s.logo}">${s.nom}`
+    :`<span class="dot"></span>${s.nom}`;
+}
+function render(){
+  renderNav();updateBrand();
+  const fixed=MODULES_FIXES.find(m=>m.id===current);
+  const fixedLabel=fixed?((DATA.moduleLabels[fixed.id]&&DATA.moduleLabels[fixed.id].label)||fixed.label):null;
+  const dynSvc=current.startsWith('svc_')?DATA.services.find(s=>'svc_'+s.id===current):null;
+  const dynMod=current.startsWith('mod_')?DATA.modulesPerso.find(m=>'mod_'+m.id===current):null;
+  document.getElementById('pageTitle').textContent=fixed?fixedLabel:(dynSvc?dynSvc.nom:(dynMod?dynMod.label:''));
+  if(dynSvc){renderServicePage(dynSvc);return;}
+  if(dynMod){renderCustomModule(dynMod);return;}
+  if(current==='parametres'&&DATA.settings.secCode&&!paramUnlocked){renderParamLock();return;}
+  ({dashboard:renderDashboard,clients:()=>renderCrud('clients'),formations:()=>renderCrud('formations'),
+    inscriptions:renderInscriptions,paiements:renderPaiements,caisse:renderCaisse,
+    ventes:renderVentes,impressions:renderImpressions,graphisme:()=>renderCrud('graphisme'),
+    maintenance:()=>renderCrud('maintenance'),stock:()=>renderCrud('stock'),
+    fournisseurs:()=>renderCrud('fournisseurs'),employes:()=>renderCrud('employes'),
+    factures:renderFactures,services:()=>renderCrud('services'),
+    rapports:renderRapports,parametres:renderParametres
+  })[current]();
+}
+
+/* ===== SCHEMAS CRUD ===== */
+const SCHEMAS={
+  clients:{title:'Clients',cols:['nom','prenom','tel','email','profession'],fields:[
+    {k:'nom',l:'Nom',t:'text',req:1},{k:'prenom',l:'Prénom',t:'text'},{k:'sexe',l:'Sexe',t:'select',opts:['Homme','Femme']},
+    {k:'tel',l:'Téléphone',t:'text'},{k:'whatsapp',l:'WhatsApp',t:'text'},{k:'email',l:'Email',t:'text'},
+    {k:'adresse',l:'Adresse',t:'text'},{k:'profession',l:'Profession',t:'text'},{k:'observations',l:'Observations',t:'textarea'}
+  ]},
+  formations:{title:'Formations',cols:['nom','formateur','duree','prix','etat'],fields:[
+    {k:'nom',l:'Nom de la formation',t:'text',req:1},{k:'duree',l:'Durée',t:'text'},
+    {k:'prix',l:'Prix (FCFA)',t:'number'},{k:'formateur',l:'Formateur',t:'text'},
+    {k:'horaires',l:'Horaires',t:'text'},{k:'salle',l:'Salle',t:'text'},
+    {k:'places',l:'Nb places',t:'number'},{k:'etat',l:'État',t:'select',opts:['Planifiée','En cours','Terminée']},
+    {k:'description',l:'Description',t:'textarea'}
+  ]},
+  graphisme:{title:'Commandes Graphisme',cols:['client','type','qte','avance','reste','etat'],fields:[
+    {k:'client',l:'Client',t:'text',req:1},
+    {k:'type',l:'Type',t:'text',req:1},
+    {k:'description',l:'Description',t:'textarea'},
+    {k:'qte',l:'Quantité',t:'number'},
+    {k:'prix',l:'Prix total (FCFA)',t:'number'},
+    {k:'avance',l:'Avance donnée (FCFA)',t:'number'},
+    {k:'etat',l:'État',t:'select',opts:['En attente','En cours','Livré']}
+  ]},
+  maintenance:{title:'Maintenance',cols:['client','appareil','technicien','etat','facture'],fields:[
+    {k:'client',l:'Client',t:'text',req:1},{k:'appareil',l:'Appareil',t:'text'},
+    {k:'diagnostic',l:'Diagnostic',t:'textarea'},{k:'pieces',l:'Pièces remplacées',t:'text'},
+    {k:'mo',l:"Main d'œuvre (FCFA)",t:'number'},{k:'technicien',l:'Technicien',t:'text'},
+    {k:'etat',l:'État',t:'select',opts:['Reçu','Diagnostic','En réparation','Prêt','Livré']},
+    {k:'garantie',l:'Garantie',t:'text'},{k:'facture',l:'Montant facture (FCFA)',t:'number'}
+  ]},
+  stock:{title:'Stock',cols:['nom','categorie','qte','seuil','prix'],fields:[
+    {k:'nom',l:'Article',t:'text',req:1},{k:'categorie',l:'Catégorie',t:'text'},
+    {k:'qte',l:'Quantité',t:'number'},{k:'seuil',l:"Seuil d'alerte",t:'number'},
+    {k:'prix',l:'Prix unitaire (FCFA)',t:'number'}
+  ]},
+  fournisseurs:{title:'Fournisseurs',cols:['nom','article','tel','email'],fields:[
+    {k:'nom',l:'Nom',t:'text',req:1},{k:'article',l:'Article(s) fourni(s)',t:'text'},
+    {k:'tel',l:'Téléphone',t:'text'},{k:'email',l:'Email',t:'text'},
+    {k:'adresse',l:'Adresse',t:'text'},{k:'notes',l:'Notes',t:'textarea'}
+  ]},
+  employes:{title:'Employés',cols:['nom','fonction','salaire','tel'],fields:[
+    {k:'nom',l:'Nom',t:'text',req:1},{k:'fonction',l:'Fonction / Poste',t:'text'},
+    {k:'salaire',l:'Salaire (FCFA)',t:'number'},{k:'prime',l:'Prime (FCFA)',t:'number'},
+    {k:'tel',l:'Téléphone',t:'text'},{k:'conges',l:'Congés restants',t:'number'}
+  ]},
+  services:{title:'Services',cols:['nom','prix'],fields:[
+    {k:'nom',l:'Nom du service',t:'text',req:1},{k:'prix',l:'Prix par défaut (FCFA)',t:'number'}
+  ]},
+};
+
+/* ===== CRUD GÉNÉRIQUE ===== */
+function fieldInput(f,val=''){
+  if(f.t==='select')return`<select id="f_${f.k}">${f.opts.map(o=>`<option${val===o?' selected':''}>${o}</option>`).join('')}</select>`;
+  if(f.t==='textarea')return`<textarea id="f_${f.k}" rows="2">${val||''}</textarea>`;
+  return`<input id="f_${f.k}" type="${f.t||'text'}" value="${val!=null?val:''}" ${f.placeholder?`placeholder="${f.placeholder}"`:''}">`;
+}
+function openForm(key,id=null){
+  const schema=SCHEMAS[key];
+  const row=id?DATA[key].find(r=>r.id===id):{};
+  openModal(`<h3>${id?'Modifier':'Ajouter'} — ${schema.title}</h3>
+    <div class="formrow">${schema.fields.map(f=>`<div><label>${f.l}${f.req?' *':''}</label>${fieldInput(f,row[f.k])}</div>`).join('')}</div>
+    <div class="modal-actions"><button class="btn ghost" onclick="closeModal()">Annuler</button><button class="btn" id="saveBtn">Enregistrer</button></div>`);
+  document.getElementById('saveBtn').onclick=()=>{
+    const obj=id?{...row}:{id:uid()};
+    let ok=true,first=null;
+    schema.fields.forEach(f=>{
+      const el=document.getElementById('f_'+f.k);
+      let v=el.value; if(f.t==='number')v=v?Number(v):null;
+      obj[f.k]=v; el.classList.remove('invalid');
+      if(f.req&&!v){ok=false;el.classList.add('invalid');if(!first)first=el;}
+    });
+    if(!ok){toast('Remplissez les champs obligatoires (encadrés en rouge)','warn');first&&first.focus();return;}
+    // Graphisme : reste = prix - avance
+    if(key==='graphisme'){obj.reste=Math.max(0,(Number(obj.prix)||0)-(Number(obj.avance)||0));}
+    if(!id)DATA[key].push(obj);
+    save();closeModal();toast('Enregistré ✓','ok');render();
+    if(key==='services')renderNav();
+  };
+}
+function renderCrud(key){
+  const schema=SCHEMAS[key];
+  const c=document.getElementById('content');
+  // Colonnes affichées avec libellés (fallback pour les colonnes calculées absentes de "fields", ex: "reste")
+  const colLabelFallback={reste:'Reste',seuil:'Seuil'};
+  const colLabels=schema.cols.map(cl=>schema.fields.find(f=>f.k===cl)||{k:cl,l:colLabelFallback[cl]||(cl.charAt(0).toUpperCase()+cl.slice(1))});
+  c.innerHTML=`<div class="toolbar">
+    <input type="search" id="search" placeholder="Rechercher...">
+    <button class="btn" id="addBtn">+ Ajouter</button>
+    <button class="btn ghost" id="exBtn">Export Excel</button>
+  </div>
+  <div class="card"><table><thead><tr>${colLabels.map(f=>`<th>${f.l}</th>`).join('')}<th>Actions</th></tr></thead><tbody id="tbody"></tbody></table><div id="emptyMsg"></div></div>`;
+  const draw=(filter='')=>{
+    let rows=DATA[key];
+    if(filter)rows=rows.filter(r=>JSON.stringify(r).toLowerCase().includes(filter.toLowerCase()));
+    document.getElementById('tbody').innerHTML=rows.map(r=>`<tr>
+      ${schema.cols.map(cl=>{
+        const f=schema.fields.find(x=>x.k===cl);
+        let v=r[cl]!=null?r[cl]:'';
+        if(f&&f.t==='number'&&v!=='')v=fmt(v);
+        if(cl==='etat')v=`<span class="badge ${r[cl]==='Livré'||r[cl]==='En cours'?'ok':r[cl]==='En attente'?'warn':'info'}">${r[cl]||''}</span>`;
+        if(cl==='reste')v=Number(r.reste)>0?`<span class="badge warn">${fmt(r.reste)}</span>`:`<span class="badge ok">Soldé</span>`;
+        if(cl==='qte')v=`<b>${r[cl]||0}</b>${Number(r[cl])<=Number(r.seuil)?` <span class="badge danger">⚠</span>`:''}`;
+        return`<td>${v}</td>`;
+      }).join('')}
+      <td><button class="btn ghost sm" onclick="openForm('${key}','${r.id}')">Modifier</button> <button class="btn danger sm" onclick="delRow('${key}','${r.id}')">Suppr.</button></td>
+    </tr>`).join('');
+    document.getElementById('emptyMsg').innerHTML=rows.length?'':'<div class="empty">Aucune donnée.</div>';
+  };
+  draw();
+  document.getElementById('search').oninput=e=>draw(e.target.value);
+  document.getElementById('addBtn').onclick=()=>openForm(key);
+  document.getElementById('exBtn').onclick=()=>{
+    const ws=XLSX.utils.json_to_sheet(DATA[key]);const wb=XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb,ws,schema.title.slice(0,30));XLSX.writeFile(wb,`${key}.xlsx`);
+  };
+}
+window.openForm=openForm;
+window.delRow=(key,id)=>{
+  if(confirm('Supprimer cet élément ?')){
+    DATA[key]=DATA[key].filter(r=>r.id!==id);
+    if(key==='services'&&current==='svc_'+id)current='services';
+    save();toast('Supprimé');render();
+  }
+};
+
+/* ===== GALERIE D'ICÔNES ===== */
+const ICON_GALLERY=['📁','🖨️','🎨','🛠️','📦','🚚','🧑‍💼','🧾','🧩','📈','⚙️','🛒','💳','🗄️','📝','🎓','👤','📊','🏠','🏢','🏪','🚕','✈️','🎬','💇','🧼','🧺','🩺','💊','⚡','🔋','🌐','📡','🔑','🏗️','🧱','💻','📱','🖥️','🎮','🎵','📷','🍔','☕','🏨','🚗','🏍️','🛵','🔧','📚','✂️','🧯','🐐','🌾'];
+function iconGalleryHTML(selected){
+  return `<div class="icon-gallery" style="display:flex;flex-wrap:wrap;gap:6px;max-height:150px;overflow-y:auto;padding:10px;border:1px solid var(--gray-mid);border-radius:8px;margin-top:6px">
+    ${ICON_GALLERY.map(ic=>`<button type="button" class="icon-opt" data-icon="${ic}" style="width:34px;height:34px;font-size:17px;display:flex;align-items:center;justify-content:center;border:2px solid ${ic===selected?'var(--blue)':'transparent'};border-radius:8px;background:${ic===selected?'#EFF4FF':'#fff'};cursor:pointer">${ic}</button>`).join('')}
+  </div>`;
+}
+function wireIconGallery(rootId,previewId,hiddenId){
+  const root=document.getElementById(rootId);
+  root.querySelectorAll('.icon-opt').forEach(btn=>{
+    btn.onclick=()=>{
+      document.getElementById(hiddenId).value=btn.dataset.icon;
+      document.getElementById(previewId).textContent=btn.dataset.icon;
+      root.querySelectorAll('.icon-opt').forEach(b=>{b.style.borderColor='transparent';b.style.background='#fff';});
+      btn.style.borderColor='var(--blue)';btn.style.background='#EFF4FF';
+    };
+  });
+}
+
+/* ===== MODULES PERSONNALISÉS ===== */
+function parseFieldsInput(str){
+  return str.split(',').map(s=>s.trim()).filter(Boolean).map((s,i)=>{
+    const parts=s.split(':');
+    const label=(parts[0]||'').trim();
+    let type=(parts[1]||'text').trim().toLowerCase();
+    if(!['text','number','textarea'].includes(type))type='text';
+    return {k:'f'+i,l:label,t:type,req:i===0?1:undefined};
+  });
+}
+function ensureCustomData(modId){
+  if(!DATA.customData[modId])DATA.customData[modId]=[];
+  return DATA.customData[modId];
+}
+function openCustomForm(modId,id=null){
+  const m=DATA.modulesPerso.find(x=>x.id===modId);
+  if(!m)return;
+  const rows=ensureCustomData(modId);
+  const row=id?rows.find(r=>r.id===id):{};
+  openModal(`<h3>${id?'Modifier':'Ajouter'} — ${m.label}</h3>
+    <div class="formrow">${m.fields.map(f=>`<div><label>${f.l}${f.req?' *':''}</label>${fieldInput(f,row[f.k])}</div>`).join('')}</div>
+    <div class="modal-actions"><button class="btn ghost" onclick="closeModal()">Annuler</button><button class="btn" id="saveCustomBtn">Enregistrer</button></div>`);
+  document.getElementById('saveCustomBtn').onclick=()=>{
+    const obj=id?{...row}:{id:uid()};
+    let ok=true,first=null;
+    m.fields.forEach(f=>{
+      const el=document.getElementById('f_'+f.k);
+      let v=el.value; if(f.t==='number')v=v?Number(v):null;
+      obj[f.k]=v; el.classList.remove('invalid');
+      if(f.req&&!v){ok=false;el.classList.add('invalid');if(!first)first=el;}
+    });
+    if(!ok){toast('Remplissez les champs obligatoires (encadrés en rouge)','warn');first&&first.focus();return;}
+    if(!id)rows.push(obj);
+    save();closeModal();toast('Enregistré ✓','ok');render();
+  };
+}
+window.openCustomForm=openCustomForm;
+window.delCustomRow=(modId,id)=>{
+  if(confirm('Supprimer cet élément ?')){
+    DATA.customData[modId]=(DATA.customData[modId]||[]).filter(r=>r.id!==id);
+    save();toast('Supprimé');render();
+  }
+};
+function openModuleForm(){
+  openModal(`<h3>Nouveau module</h3>
+    <div class="section-hint">Créez un module d'activité personnalisé (ex: Location de matériel, Cybercafé, Location de salle...) avec son propre tableau.</div>
+    <div class="formrow">
+      <div><label>Nom du module *</label><input id="nm_label" placeholder="Ex: Location de matériel"></div>
+      <div><label>Section du menu</label><select id="nm_group">
+        <option value="ops">Opérations</option>
+        <option value="stock">Stock & Achats</option>
+        <option value="rh">Ressources Humaines</option>
+        <option value="fin" selected>Finance & Admin</option>
+      </select></div>
+    </div>
+    <div class="section-hint" style="margin-top:-8px;margin-bottom:14px">Le module se placera automatiquement en haut de la section choisie dans le menu.</div>
+    <div><label>Icône</label>
+      <div style="display:flex;align-items:center;gap:10px"><span id="nm_iconPreview" style="font-size:24px">📁</span><span class="section-hint" style="margin:0">Choisissez une icône ci-dessous</span></div>
+      <input type="hidden" id="nm_icon" value="📁">
+      <div id="nm_iconGallery">${iconGalleryHTML('📁')}</div>
+    </div>
+    <div style="margin-top:14px"><label>Champs du tableau *</label><input id="nm_fields" value="Nom:text, Description:textarea, Montant:number"></div>
+    <div class="section-hint" style="margin-top:6px">Séparez les champs par une virgule, au format <b>Label:type</b> (types : text, number, textarea). Le 1er champ est obligatoire à la saisie.</div>
+    <div class="modal-actions"><button class="btn ghost" onclick="closeModal()">Annuler</button><button class="btn" id="nmSaveBtn">Créer le module</button></div>`);
+  wireIconGallery('nm_iconGallery','nm_iconPreview','nm_icon');
+  document.getElementById('nmSaveBtn').onclick=()=>{
+    const labelEl=document.getElementById('nm_label');
+    const label=labelEl.value.trim();
+    labelEl.classList.remove('invalid');
+    if(!label){labelEl.classList.add('invalid');labelEl.focus();toast('Le nom du module est obligatoire','warn');return;}
+    const fieldsEl=document.getElementById('nm_fields');
+    const fields=parseFieldsInput(fieldsEl.value);
+    fieldsEl.classList.remove('invalid');
+    if(!fields.length){fieldsEl.classList.add('invalid');fieldsEl.focus();toast('Indiquez au moins un champ','warn');return;}
+    const icon=document.getElementById('nm_icon').value.trim()||'📁';
+    const group=document.getElementById('nm_group').value;
+    const mod={id:uid(),label,icon,fields,group};
+    DATA.modulesPerso.push(mod);
+    DATA.customData[mod.id]=[];
+    current='mod_'+mod.id;
+    save();closeModal();toast('Module créé ✓','ok');render();
+  };
+}
+function openModuleEditForm(modId){
+  const m=DATA.modulesPerso.find(x=>x.id===modId);
+  if(!m)return;
+  const grp=m.group||'fin';
+  openModal(`<h3>Renommer le module</h3>
+    <div class="formrow">
+      <div><label>Nom du module *</label><input id="em_label" value="${m.label}"></div>
+      <div><label>Section du menu</label><select id="em_group">
+        <option value="ops"${grp==='ops'?' selected':''}>Opérations</option>
+        <option value="stock"${grp==='stock'?' selected':''}>Stock & Achats</option>
+        <option value="rh"${grp==='rh'?' selected':''}>Ressources Humaines</option>
+        <option value="fin"${grp==='fin'?' selected':''}>Finance & Admin</option>
+      </select></div>
+    </div>
+    <div><label>Icône</label>
+      <div style="display:flex;align-items:center;gap:10px"><span id="em_iconPreview" style="font-size:24px">${m.icon||'📁'}</span><span class="section-hint" style="margin:0">Choisissez une icône ci-dessous</span></div>
+      <input type="hidden" id="em_icon" value="${m.icon||'📁'}">
+      <div id="em_iconGallery">${iconGalleryHTML(m.icon||'📁')}</div>
+    </div>
+    <div class="section-hint" style="margin-top:14px">Les champs du tableau ne sont pas modifiables après création, afin de préserver les données déjà saisies.</div>
+    <div class="modal-actions"><button class="btn ghost" onclick="closeModal()">Annuler</button><button class="btn" id="emSaveBtn">Enregistrer</button></div>`);
+  wireIconGallery('em_iconGallery','em_iconPreview','em_icon');
+  document.getElementById('emSaveBtn').onclick=()=>{
+    const labelEl=document.getElementById('em_label');
+    const label=labelEl.value.trim();
+    labelEl.classList.remove('invalid');
+    if(!label){labelEl.classList.add('invalid');labelEl.focus();toast('Le nom du module est obligatoire','warn');return;}
+    m.label=label;m.icon=document.getElementById('em_icon').value.trim()||'📁';
+    m.group=document.getElementById('em_group').value;
+    save();closeModal();toast('Module modifié ✓','ok');render();
+  };
+}
+window.delModule=modId=>{
+  const m=DATA.modulesPerso.find(x=>x.id===modId);
+  if(!m)return;
+  if(confirm(`Supprimer le module "${m.label}" et toutes ses données ? Cette action est irréversible.`)){
+    DATA.modulesPerso=DATA.modulesPerso.filter(x=>x.id!==modId);
+    delete DATA.customData[modId];
+    if(current==='mod_'+modId)current='parametres';
+    save();toast('Module supprimé');render();
+  }
+};
+window.openModuleForm=openModuleForm;
+window.openModuleEditForm=openModuleEditForm;
+
+/* ===== MODULES DU SYSTÈME (renommer / masquer) ===== */
+function openFixedModuleEditForm(modId){
+  const base=MODULES_FIXES.find(x=>x.id===modId);
+  if(!base)return;
+  const ov=DATA.moduleLabels[modId]||{};
+  const curLabel=ov.label||base.label;
+  const curIcon=ov.icon||base.icon;
+  openModal(`<h3>Renommer le module</h3>
+    <div class="formrow">
+      <div><label>Nom du module *</label><input id="fm_label" value="${curLabel}"></div>
+    </div>
+    <div><label>Icône</label>
+      <div style="display:flex;align-items:center;gap:10px"><span id="fm_iconPreview" style="font-size:24px">${curIcon}</span><span class="section-hint" style="margin:0">Choisissez une icône ci-dessous</span></div>
+      <input type="hidden" id="fm_icon" value="${curIcon}">
+      <div id="fm_iconGallery">${iconGalleryHTML(curIcon)}</div>
+    </div>
+    <div class="modal-actions">
+      ${ov.label||ov.icon?'<button class="btn ghost" id="fmResetBtn" style="margin-right:auto">Réinitialiser</button>':''}
+      <button class="btn ghost" onclick="closeModal()">Annuler</button><button class="btn" id="fmSaveBtn">Enregistrer</button>
+    </div>`);
+  wireIconGallery('fm_iconGallery','fm_iconPreview','fm_icon');
+  const resetBtn=document.getElementById('fmResetBtn');
+  if(resetBtn)resetBtn.onclick=()=>{delete DATA.moduleLabels[modId];save();closeModal();toast('Module réinitialisé ✓','ok');render();};
+  document.getElementById('fmSaveBtn').onclick=()=>{
+    const labelEl=document.getElementById('fm_label');
+    const label=labelEl.value.trim();
+    labelEl.classList.remove('invalid');
+    if(!label){labelEl.classList.add('invalid');labelEl.focus();toast('Le nom du module est obligatoire','warn');return;}
+    const icon=document.getElementById('fm_icon').value.trim()||base.icon;
+    DATA.moduleLabels[modId]={label,icon};
+    save();closeModal();toast('Module modifié ✓','ok');render();
+  };
+}
+window.openFixedModuleEditForm=openFixedModuleEditForm;
+window.hideModule=modId=>{
+  if(modId==='dashboard'||modId==='parametres'){toast('Ce module ne peut pas être supprimé du menu','warn');return;}
+  const base=MODULES_FIXES.find(x=>x.id===modId);
+  const label=(DATA.moduleLabels[modId]&&DATA.moduleLabels[modId].label)||base.label;
+  if(confirm(`Retirer "${label}" du menu ? Les données existantes seront conservées et le module pourra être réaffiché à tout moment.`)){
+    DATA.hiddenModules.push(modId);
+    if(current===modId)current='dashboard';
+    save();toast('Module retiré du menu');render();
+  }
+};
+window.showModule=modId=>{
+  DATA.hiddenModules=DATA.hiddenModules.filter(x=>x!==modId);
+  save();toast('Module réaffiché ✓','ok');render();
+};
+function renderCustomModule(m){
+  const rows=ensureCustomData(m.id);
+  const c=document.getElementById('content');
+  c.innerHTML=`<div class="toolbar">
+    <input type="search" id="search" placeholder="Rechercher...">
+    <button class="btn" id="addBtn">+ Ajouter</button>
+    <button class="btn ghost" id="exBtn">Export Excel</button>
+    <button class="btn ghost" id="renameModBtn">✏️ Renommer le module</button>
+    <button class="btn danger" id="delModBtn">🗑️ Supprimer le module</button>
+  </div>
+  <div class="card"><table><thead><tr>${m.fields.map(f=>`<th>${f.l}</th>`).join('')}<th>Actions</th></tr></thead><tbody id="tbody"></tbody></table><div id="emptyMsg"></div></div>`;
+  const draw=(filter='')=>{
+    let list=rows;
+    if(filter)list=list.filter(r=>JSON.stringify(r).toLowerCase().includes(filter.toLowerCase()));
+    document.getElementById('tbody').innerHTML=list.map(r=>`<tr>
+      ${m.fields.map(f=>{let v=r[f.k]!=null?r[f.k]:'';if(f.t==='number'&&v!=='')v=fmt(v);return`<td>${v}</td>`;}).join('')}
+      <td><button class="btn ghost sm" onclick="openCustomForm('${m.id}','${r.id}')">Modifier</button> <button class="btn danger sm" onclick="delCustomRow('${m.id}','${r.id}')">Suppr.</button></td>
+    </tr>`).join('');
+    document.getElementById('emptyMsg').innerHTML=list.length?'':'<div class="empty">Aucune donnée.</div>';
+  };
+  draw();
+  document.getElementById('search').oninput=e=>draw(e.target.value);
+  document.getElementById('addBtn').onclick=()=>openCustomForm(m.id);
+  document.getElementById('renameModBtn').onclick=()=>openModuleEditForm(m.id);
+  document.getElementById('delModBtn').onclick=()=>delModule(m.id);
+  document.getElementById('exBtn').onclick=()=>{
+    const ws=XLSX.utils.json_to_sheet(rows);const wb=XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb,ws,m.label.slice(0,30));XLSX.writeFile(wb,`${m.label}.xlsx`);
+  };
+}
+
+/* ===== PDF HELPER ===== */
+function makePDF(title, lines, subtitle=''){
+  const s=DATA.settings;
+  const doc=new window._jspdf.jsPDF();
+  let y=10;
+  // En-tête
+  if(s.logo){try{doc.addImage(s.logo,'PNG',14,y,22,22);}catch(e){}}
+  const tx=s.logo?42:14;
+  doc.setFontSize(15);doc.setFont(undefined,'bold');doc.text(s.nom||'ZAKTECH',tx,y+8);
+  doc.setFontSize(8);doc.setFont(undefined,'normal');doc.setTextColor(100);
+  [s.adresse,[s.tel,s.email].filter(Boolean).join(' — '),s.site].filter(Boolean).forEach((l,i)=>doc.text(l,tx,y+14+i*5));
+  doc.setTextColor(0);y+=34;
+  doc.setLineWidth(0.3);doc.line(14,y,196,y);y+=7;
+  doc.setFontSize(13);doc.setFont(undefined,'bold');doc.text(title,14,y);
+  if(subtitle){doc.setFontSize(9);doc.setFont(undefined,'normal');doc.setTextColor(80);doc.text(subtitle,14,y+6);doc.setTextColor(0);y+=5;}
+  y+=10;
+  lines.forEach(l=>{
+    if(typeof l==='string'&&l==='---'){doc.setLineWidth(0.2);doc.line(14,y,196,y);y+=5;return;}
+    if(typeof l==='object'&&l.head){
+      doc.setFontSize(8);doc.setFont(undefined,'bold');
+      l.head.forEach((h,i)=>doc.text(h,l.x[i],y));y+=5;
+      doc.setLineWidth(0.2);doc.line(14,y,196,y);y+=4;
+      doc.setFont(undefined,'normal');
+      return;
+    }
+    if(typeof l==='object'&&l.row){
+      doc.setFontSize(8);
+      l.row.forEach((v,i)=>doc.text(String(v),l.x[i],y));y+=6;
+      return;
+    }
+    doc.setFontSize(9);doc.setFont(undefined,'normal');
+    const[key,val]=typeof l==='object'?[l.k,l.v]:[l,''];
+    if(val!==undefined&&val!==''){doc.setFont(undefined,'bold');doc.text(key+' :',14,y);doc.setFont(undefined,'normal');doc.text(String(val),80,y);}
+    else doc.text(key,14,y);
+    y+=6;if(y>275){doc.addPage();y=20;}
+  });
+  return doc;
+}
+
+/* ===== DASHBOARD ===== */
+function renderDashboard(){
+  const t=todayISO();const month=t.slice(0,7);
+  const df=x=>(x.date||'').slice(0,10);
+  const payToday=DATA.paiements.filter(p=>df(p)===t).reduce((s,p)=>s+Number(p.montant),0);
+  const payMonth=DATA.paiements.filter(p=>df(p).startsWith(month)).reduce((s,p)=>s+Number(p.montant),0);
+  const depMonth=DATA.caisse.filter(c=>c.type==='sortie'&&df(c).startsWith(month)).reduce((s,c)=>s+Number(c.montant),0);
+  const kpis=[
+    {l:'CA du jour',v:fmt(payToday),cls:'blue'},{l:'CA du mois',v:fmt(payMonth),cls:'blue'},
+    {l:'Clients',v:DATA.clients.length,cls:'ok'},{l:'Inscriptions',v:DATA.inscriptions.length,cls:'ok'},
+    {l:'Réparations en cours',v:DATA.maintenance.filter(m=>m.etat==='En réparation').length,cls:'warn'},
+    {l:'Graphisme en cours',v:DATA.graphisme.filter(g=>g.etat==='En cours').length,cls:'warn'},
+    {l:'Dépenses mois',v:fmt(depMonth),cls:'danger'},{l:'Bénéfice mois',v:fmt(payMonth-depMonth),cls:'blue'},
+  ];
+  const c=document.getElementById('content');
+  c.innerHTML=`<div class="grid kpis">${kpis.map(k=>`<div class="card kpi"><div class="label">${k.l}</div><div class="value ${k.cls}">${k.v}</div></div>`).join('')}</div>
+  <div class="grid charts">
+    <div class="card"><div class="panel-title"><h2>Paiements (7 j)</h2></div><canvas id="chartPay" height="170"></canvas></div>
+    <div class="card"><div class="panel-title"><h2>Caisse (7 j)</h2></div><canvas id="chartCaisse" height="170"></canvas></div>
+  </div>`;
+  const days=[...Array(7)].map((_,i)=>{const d=new Date();d.setDate(d.getDate()-(6-i));return d.toISOString().slice(0,10);});
+  new Chart(document.getElementById('chartPay'),{type:'line',data:{labels:days.map(d=>d.slice(5)),datasets:[{data:days.map(d=>DATA.paiements.filter(p=>df(p)===d).reduce((s,p)=>s+Number(p.montant),0)),borderColor:'#2563EB',backgroundColor:'rgba(37,99,235,.12)',fill:true,tension:.35}]},options:{plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}});
+  new Chart(document.getElementById('chartCaisse'),{type:'bar',data:{labels:days.map(d=>d.slice(5)),datasets:[{label:'Entrées',data:days.map(d=>DATA.caisse.filter(c=>c.type==='entree'&&df(c)===d).reduce((s,c)=>s+Number(c.montant),0)),backgroundColor:'#16A34A'},{label:'Sorties',data:days.map(d=>DATA.caisse.filter(c=>c.type==='sortie'&&df(c)===d).reduce((s,c)=>s+Number(c.montant),0)),backgroundColor:'#DC2626'}]},options:{plugins:{legend:{position:'bottom'}},scales:{y:{beginAtZero:true}}}});
+}
+
+/* ===== INSCRIPTIONS ===== */
+function renderInscriptions(){
+  const c=document.getElementById('content');
+  c.innerHTML=`<div class="toolbar">
+    <button class="btn" id="addBtn">+ Nouvelle inscription</button>
+    <button class="btn ghost" id="mgrForm">Gérer les formations</button>
+  </div>
+  <div class="card"><table><thead><tr><th>Client</th><th>Formation</th><th>Prix</th><th>Payé</th><th>Reste</th><th>Date</th><th>Actions</th></tr></thead><tbody id="tbody"></tbody></table><div id="emptyMsg"></div></div>`;
+  const draw=()=>{
+    document.getElementById('tbody').innerHTML=DATA.inscriptions.map(i=>{
+      const fo=DATA.formations.find(f=>f.id===i.formationId);
+      const reste=Math.max(0,(Number(i.prix)||0)-(Number(i.paye)||0));
+      return`<tr><td>${i.client}</td><td>${fo?fo.nom:'—'}</td><td>${fmt(i.prix)}</td><td>${fmt(i.paye)}</td>
+      <td>${reste>0?`<span class="badge warn">${fmt(reste)}</span>`:'<span class="badge ok">Soldé</span>'}</td><td>${i.date}</td>
+      <td><button class="btn ghost sm" onclick="printInscription('${i.id}')">Fiche PDF</button> <button class="btn danger sm" onclick="delInscription('${i.id}')">Suppr.</button></td></tr>`;
+    }).join('');
+    document.getElementById('emptyMsg').innerHTML=DATA.inscriptions.length?'':'<div class="empty">Aucune inscription.</div>';
+  };
+  draw();
+  // Gérer formations
+  document.getElementById('mgrForm').onclick=()=>{
+    const refresh=()=>{
+      openModal(`<h3>Gérer les formations</h3>
+        <div class="formrow">
+          <div><label>Nom de la formation *</label><input id="fo_nom" placeholder="Ex: Excel, Graphisme..."></div>
+          <div><label>Durée</label><input id="fo_duree" placeholder="Ex: 1 mois"></div>
+          <div><label>Prix (FCFA)</label><input id="fo_prix" type="number" placeholder="0"></div>
+          <div><label>Formateur</label><input id="fo_formateur"></div>
+        </div>
+        <button class="btn ghost sm" id="fo_add">+ Ajouter cette formation</button>
+        <table style="margin-top:12px"><thead><tr><th>Formation</th><th>Prix</th><th>Formateur</th><th></th></tr></thead><tbody>
+        ${DATA.formations.map(f=>`<tr><td>${f.nom}</td><td>${fmt(f.prix)}</td><td>${f.formateur||'—'}</td>
+          <td><button class="btn danger sm" onclick="delFormation('${f.id}')">Suppr.</button></td></tr>`).join('')||
+          '<tr><td colspan="4"><div class="empty">Aucune formation.</div></td></tr>'}
+        </tbody></table>
+        <div class="modal-actions"><button class="btn ghost" onclick="closeModal()">Fermer</button></div>`);
+      document.getElementById('fo_add').onclick=()=>{
+        const el=document.getElementById('fo_nom');const nom=el.value.trim();
+        el.classList.remove('invalid');if(!nom){el.classList.add('invalid');el.focus();return;}
+        DATA.formations.push({id:uid(),nom,duree:document.getElementById('fo_duree').value,prix:Number(document.getElementById('fo_prix').value)||0,formateur:document.getElementById('fo_formateur').value,etat:'Planifiée'});
+        save();refresh();
+      };
+    };
+    window.delFormation=id=>{if(confirm('Supprimer ?')){DATA.formations=DATA.formations.filter(f=>f.id!==id);save();refresh();}};
+    refresh();
+  };
+  document.getElementById('addBtn').onclick=()=>{
+    if(!DATA.formations.length){toast('Créez d\'abord une formation via "Gérer les formations"','warn');return;}
+    openModal(`<h3>Nouvelle inscription</h3>
+      <div class="formrow">
+        <div><label>Client *</label><input id="i_client" list="cliL"><datalist id="cliL">${DATA.clients.map(c=>`<option value="${c.nom} ${c.prenom||''}">`).join('')}</datalist></div>
+        <div><label>Formation *</label><select id="i_form">${DATA.formations.map(f=>`<option value="${f.id}">${f.nom} — ${fmt(f.prix)}</option>`).join('')}</select></div>
+        <div><label>Réduction/Bourse (FCFA)</label><input id="i_reduc" type="number" value="0"></div>
+        <div><label>Montant payé (FCFA)</label><input id="i_paye" type="number" value="0"></div>
+        <div><label>Mode de paiement</label><select id="i_mode">${['Espèces','NITA','AMANA','Airtel Money','Moov Money','Banque','Carte'].map(m=>`<option>${m}</option>`).join('')}</select></div>
+        <div><label>Date</label><input id="i_date" type="date" value="${todayISO()}"></div>
+      </div>
+      <div class="modal-actions"><button class="btn ghost" onclick="closeModal()">Annuler</button><button class="btn" id="saveBtn">Enregistrer</button></div>`);
+    document.getElementById('saveBtn').onclick=()=>{
+      const client=document.getElementById('i_client').value.trim();
+      const fo=DATA.formations.find(f=>f.id===document.getElementById('i_form').value);
+      if(!client){toast('Indiquez le client','warn');return;}
+      const prix=Math.max(0,(Number(fo.prix)||0)-(Number(document.getElementById('i_reduc').value)||0));
+      const paye=Number(document.getElementById('i_paye').value)||0;
+      const mode=document.getElementById('i_mode').value;
+      const date=document.getElementById('i_date').value;
+      const obj={id:uid(),client,formationId:fo.id,prix,paye,mode,date};
+      DATA.inscriptions.push(obj);
+      const ref='INS-'+Date.now().toString().slice(-6);
+      if(paye>0){
+        DATA.paiements.push({id:uid(),client,montant:paye,mode,date,ref});
+        addCaisse('entree',`Inscription ${fo.nom} — ${client}`,paye,date);
+      }
+      save();closeModal();toast('Inscription enregistrée ✓','ok');draw();
+    };
+  };
+  window.delInscription=id=>{if(confirm('Supprimer ?')){DATA.inscriptions=DATA.inscriptions.filter(i=>i.id!==id);save();draw();}};
+  window.printInscription=id=>{
+    const i=DATA.inscriptions.find(x=>x.id===id);
+    const fo=DATA.formations.find(f=>f.id===i.formationId);
+    const doc=makePDF(`FICHE D'INSCRIPTION`,[ {k:'Client',v:i.client},{k:'Formation',v:fo?fo.nom:'—'},{k:'Formateur',v:fo?fo.formateur:'—'},{k:'Prix total',v:fmt(i.prix)},{k:'Montant payé',v:fmt(i.paye)},{k:'Reste à payer',v:fmt(i.prix-i.paye)},{k:'Mode de paiement',v:i.mode||'—'},{k:'Date',v:i.date} ]);
+    doc.save(`inscription_${i.client}.pdf`);
+  };
+}
+
+/* ===== PAIEMENTS ===== */
+function renderPaiements(){
+  const c=document.getElementById('content');
+  c.innerHTML=`<div class="toolbar"><button class="btn" id="addBtn">+ Nouveau paiement</button></div>
+  <div class="card"><table><thead><tr><th>Réf.</th><th>Client</th><th>Montant</th><th>Mode</th><th>Date</th><th>Actions</th></tr></thead><tbody id="tbody"></tbody></table><div id="emptyMsg"></div></div>`;
+  const draw=()=>{
+    document.getElementById('tbody').innerHTML=[...DATA.paiements].reverse().map(p=>`<tr>
+      <td class="mono">${p.ref}</td><td>${p.client||'—'}</td><td>${fmt(p.montant)}</td><td>${p.mode}</td><td>${(p.date||'').slice(0,10)}</td>
+      <td><button class="btn ghost sm" onclick="printRecu('${p.id}')">Reçu PDF</button></td></tr>`).join('');
+    document.getElementById('emptyMsg').innerHTML=DATA.paiements.length?'':'<div class="empty">Aucun paiement.</div>';
+  };
+  draw();
+  document.getElementById('addBtn').onclick=()=>{
+    openModal(`<h3>Nouveau paiement</h3>
+      <div class="formrow">
+        <div><label>Client</label><input id="p_client"></div>
+        <div><label>Montant (FCFA) *</label><input id="p_montant" type="number"></div>
+        <div><label>Mode *</label><select id="p_mode">${['Espèces','NITA','AMANA','Airtel Money','Moov Money','Banque','Carte'].map(m=>`<option>${m}</option>`).join('')}</select></div>
+        <div><label>Date</label><input id="p_date" type="date" value="${todayISO()}"></div>
+      </div>
+      <div class="modal-actions"><button class="btn ghost" onclick="closeModal()">Annuler</button><button class="btn" id="saveBtn">Enregistrer</button></div>`);
+    document.getElementById('saveBtn').onclick=()=>{
+      const montant=Number(document.getElementById('p_montant').value)||0;
+      if(!montant){toast('Indiquez un montant','warn');return;}
+      const client=document.getElementById('p_client').value;
+      const mode=document.getElementById('p_mode').value;
+      const date=document.getElementById('p_date').value;
+      const ref='PAY-'+Date.now().toString().slice(-6);
+      DATA.paiements.push({id:uid(),client,montant,mode,date,ref});
+      addCaisse('entree',`Paiement ${client||''}`,montant,date);
+      save();closeModal();toast('Paiement enregistré ✓','ok');draw();
+    };
+  };
+  window.printRecu=id=>{
+    const p=DATA.paiements.find(x=>x.id===id);
+    const doc=makePDF('REÇU DE PAIEMENT',[{k:'N° reçu',v:p.ref},{k:'Client',v:p.client||'—'},{k:'Montant',v:fmt(p.montant)},{k:'Mode',v:p.mode},{k:'Date',v:(p.date||'').slice(0,10)}]);
+    doc.save(`recu_${p.ref}.pdf`);
+  };
+}
+
+/* ===== CAISSE ===== */
+function renderCaisse(){
+  const t=todayISO();const df=x=>(x.date||'').slice(0,10);
+  const eJ=DATA.caisse.filter(c=>c.type==='entree'&&df(c)===t).reduce((s,c)=>s+Number(c.montant),0);
+  const sJ=DATA.caisse.filter(c=>c.type==='sortie'&&df(c)===t).reduce((s,c)=>s+Number(c.montant),0);
+  const c=document.getElementById('content');
+  c.innerHTML=`<div class="grid kpis" style="grid-template-columns:repeat(3,1fr)">
+    <div class="card kpi"><div class="label">Entrées du jour</div><div class="value ok">${fmt(eJ)}</div></div>
+    <div class="card kpi"><div class="label">Sorties du jour</div><div class="value danger">${fmt(sJ)}</div></div>
+    <div class="card kpi"><div class="label">Solde du jour</div><div class="value blue">${fmt(eJ-sJ)}</div></div>
+  </div>
+  <div class="toolbar"><button class="btn ok" id="addEntree">+ Entrée</button><button class="btn danger" id="addSortie">+ Sortie</button></div>
+  <div class="card"><table><thead><tr><th>Type</th><th>Libellé</th><th>Montant</th><th>Date</th></tr></thead><tbody id="tbody"></tbody></table><div id="emptyMsg"></div></div>`;
+  const draw=()=>{
+    document.getElementById('tbody').innerHTML=[...DATA.caisse].reverse().map(x=>`<tr>
+      <td><span class="badge ${x.type==='entree'?'ok':'danger'}">${x.type==='entree'?'Entrée':'Sortie'}</span></td>
+      <td>${x.libelle}</td><td>${fmt(x.montant)}</td><td>${df(x)}</td></tr>`).join('');
+    document.getElementById('emptyMsg').innerHTML=DATA.caisse.length?'':'<div class="empty">Aucun mouvement.</div>';
+  };
+  draw();
+  const openMove=(type)=>{
+    openModal(`<h3>${type==='entree'?'Nouvelle entrée':'Nouvelle sortie'}</h3>
+      <div class="formrow">
+        <div><label>Libellé *</label><input id="m_lib"></div>
+        <div><label>Montant (FCFA) *</label><input id="m_mt" type="number"></div>
+        <div><label>Date</label><input id="m_dt" type="date" value="${todayISO()}"></div>
+      </div>
+      <div class="modal-actions"><button class="btn ghost" onclick="closeModal()">Annuler</button><button class="btn" id="saveBtn">Enregistrer</button></div>`);
+    document.getElementById('saveBtn').onclick=()=>{
+      const mt=Number(document.getElementById('m_mt').value)||0;
+      if(!mt){toast('Indiquez un montant','warn');return;}
+      addCaisse(type,document.getElementById('m_lib').value,mt,document.getElementById('m_dt').value);
+      save();closeModal();draw();toast('Mouvement enregistré ✓','ok');
+    };
+  };
+  document.getElementById('addEntree').onclick=()=>openMove('entree');
+  document.getElementById('addSortie').onclick=()=>openMove('sortie');
+}
+
+/* ===== VENTES ===== */
+function renderVentes(){
+  const c=document.getElementById('content');
+  c.innerHTML=`<div class="toolbar"><button class="btn" id="addBtn">+ Nouvelle vente</button></div>
+  <div class="card"><table><thead><tr><th>Article</th><th>Client</th><th>Qté vendue</th><th>Prix unit.</th><th>Total</th><th>Date</th></tr></thead><tbody id="tbody"></tbody></table><div id="emptyMsg"></div></div>`;
+  const draw=()=>{
+    document.getElementById('tbody').innerHTML=[...DATA.ventes].reverse().map(v=>`<tr>
+      <td>${v.article}</td><td>${v.client||'—'}</td><td>${v.qte}</td><td>${fmt(v.prix)}</td><td>${fmt(v.total)}</td><td>${(v.date||'').slice(0,10)}</td></tr>`).join('');
+    document.getElementById('emptyMsg').innerHTML=DATA.ventes.length?'':'<div class="empty">Aucune vente.</div>';
+  };
+  draw();
+  document.getElementById('addBtn').onclick=()=>{
+    if(!DATA.stock.length){toast('Aucun article en stock','warn');return;}
+    openModal(`<h3>Nouvelle vente</h3>
+      <div class="formrow">
+        <div><label>Article en stock *</label><select id="v_art">${DATA.stock.map(s=>`<option value="${s.id}">${s.nom} (stock: ${s.qte||0}) — ${fmt(s.prix)}</option>`).join('')}</select></div>
+        <div><label>Client</label><input id="v_client"></div>
+        <div><label>Quantité *</label><input id="v_qte" type="number" value="1" min="1"></div>
+        <div><label>Prix unitaire (FCFA) *</label><input id="v_prix" type="number"></div>
+        <div><label>Mode de paiement</label><select id="v_mode">${['Espèces','NITA','AMANA','Airtel Money','Moov Money','Banque','Carte'].map(m=>`<option>${m}</option>`).join('')}</select></div>
+        <div><label>Date</label><input id="v_date" type="date" value="${todayISO()}"></div>
+      </div>
+      <div id="v_total" style="font-size:14px;margin-bottom:10px;color:var(--blue)">Total : <b>0 FCFA</b></div>
+      <div class="modal-actions"><button class="btn ghost" onclick="closeModal()">Annuler</button><button class="btn" id="saveBtn">Enregistrer la vente</button></div>`);
+    const updateTotal=()=>{
+      const art=DATA.stock.find(s=>s.id===document.getElementById('v_art').value);
+      const qte=Number(document.getElementById('v_qte').value)||0;
+      const prix=Number(document.getElementById('v_prix').value)||0;
+      if(art&&!document.getElementById('v_prix').value)document.getElementById('v_prix').value=art.prix||0;
+      document.getElementById('v_total').innerHTML=`Total : <b style="color:var(--blue)">${fmt(qte*(prix||Number(document.getElementById('v_prix').value)||0))}</b>`;
+    };
+    document.getElementById('v_art').onchange=()=>{
+      const art=DATA.stock.find(s=>s.id===document.getElementById('v_art').value);
+      if(art)document.getElementById('v_prix').value=art.prix||0;
+      updateTotal();
+    };
+    // Pré-remplir le prix avec le premier article
+    const firstArt=DATA.stock[0];if(firstArt)document.getElementById('v_prix').value=firstArt.prix||0;
+    ['v_qte','v_prix'].forEach(id=>document.getElementById(id).oninput=updateTotal);
+    updateTotal();
+    document.getElementById('saveBtn').onclick=()=>{
+      const art=DATA.stock.find(s=>s.id===document.getElementById('v_art').value);
+      const qte=Number(document.getElementById('v_qte').value)||0;
+      const prix=Number(document.getElementById('v_prix').value)||0;
+      const client=document.getElementById('v_client').value;
+      const mode=document.getElementById('v_mode').value;
+      const date=document.getElementById('v_date').value;
+      if(!qte||!prix){toast('Indiquez la quantité et le prix','warn');return;}
+      if(Number(art.qte)<qte){toast(`Stock insuffisant (disponible : ${art.qte})`, 'warn');return;}
+      const total=qte*prix;
+      // Déduire du stock
+      art.qte=Number(art.qte)-qte;
+      const vente={id:uid(),article:art.nom,client,qte,prix,total,mode,date};
+      DATA.ventes.push(vente);
+      DATA.paiements.push({id:uid(),client,montant:total,mode,date,ref:'VNT-'+Date.now().toString().slice(-6)});
+      addCaisse('entree',`Vente ${art.nom}${client?' — '+client:''}`,total,date);
+      save();closeModal();toast('Vente enregistrée ✓','ok');draw();
+    };
+  };
+}
+
+/* ===== IMPRESSIONS ===== */
+function renderImpressions(){
+  const c=document.getElementById('content');
+  c.innerHTML=`<div class="section-hint">Saisissez le prix unitaire librement. "× Calculer" multiplie par le nombre de pages (×1.6 si recto-verso).</div>
+  <div class="card" style="max-width:560px;margin-bottom:18px">
+    <div class="formrow">
+      <div><label>Service</label><div style="display:flex;gap:6px">
+        <select id="svc" style="flex:1">${DATA.impressionServices.map(s=>`<option value="${s.nom}">${s.nom}</option>`).join('')}</select>
+        <button class="btn ghost sm" id="manageServicesBtn" type="button" title="Gérer les services">⚙️</button>
+      </div></div>
+      <div><label>Format</label><select id="format"><option>A4</option><option>A3</option></select></div>
+      <div><label>Recto/Verso</label><select id="rv"><option>Recto</option><option>Recto-verso</option></select></div>
+      <div><label>Nombre de pages</label><input id="pages" type="number" value="1" min="1"></div>
+      <div><label>Prix unitaire / page (FCFA) *</label><input id="pu" type="number" placeholder="Saisissez librement"></div>
+      <div><label>Client</label><input id="client"></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+      <button class="btn ghost sm" id="calcBtn">× Calculer le total</button>
+      <span style="font-size:13px">Total : <b class="mono" id="totalLbl" style="color:var(--blue)">—</b></span>
+    </div>
+    <div style="margin-bottom:14px"><label>Montant total (FCFA) *</label><input id="montant" type="number" placeholder="Résultat ou saisie libre"></div>
+    <button class="btn" id="save">Enregistrer & encaisser</button>
+  </div>
+  <div class="card"><table><thead><tr><th>Client</th><th>Service</th><th>Détails</th><th>Montant</th><th>Date</th></tr></thead><tbody id="tbody"></tbody></table><div id="emptyMsg"></div></div>`;
+  document.getElementById('manageServicesBtn').onclick=openImpServicesModal;
+  document.getElementById('calcBtn').onclick=()=>{
+    const pu=Number(document.getElementById('pu').value)||0;
+    const pages=Number(document.getElementById('pages').value)||1;
+    let total=pu*pages;
+    if(document.getElementById('rv').value==='Recto-verso')total=Math.round(total*1.6);
+    document.getElementById('montant').value=total;
+    document.getElementById('totalLbl').textContent=fmt(total);
+  };
+  document.getElementById('montant').oninput=e=>document.getElementById('totalLbl').textContent=e.target.value?fmt(Number(e.target.value)):'—';
+  const draw=()=>{
+    document.getElementById('tbody').innerHTML=[...DATA.impressions].reverse().map(x=>`<tr><td>${x.client||'—'}</td><td>${x.svc}</td><td>${x.details||''}</td><td>${fmt(x.montant)}</td><td>${(x.date||'').slice(0,10)}</td></tr>`).join('');
+    document.getElementById('emptyMsg').innerHTML=DATA.impressions.length?'':'<div class="empty">Aucune opération.</div>';
+  };
+  draw();
+  document.getElementById('save').onclick=()=>{
+    const montant=Number(document.getElementById('montant').value)||0;
+    if(!montant){toast('Indiquez un montant','warn');document.getElementById('montant').focus();return;}
+    const svc=document.getElementById('svc').value;
+    const client=document.getElementById('client').value;
+    const pu=document.getElementById('pu').value;
+    const pages=document.getElementById('pages').value;
+    const rv=document.getElementById('rv').value;
+    const fmt2=document.getElementById('format').value;
+    const details=`${fmt2}, ${rv}, ${pages} p.${pu?', '+pu+' FCFA/p':''}`;
+    const date=todayISO();
+    DATA.impressions.push({id:uid(),client,svc,details,montant,date});
+    DATA.paiements.push({id:uid(),client,montant,mode:'Espèces',date,ref:'IMP-'+Date.now().toString().slice(-6)});
+    addCaisse('entree',svc+(client?' — '+client:''),montant,date);
+    save();toast('Enregistré ✓','ok');draw();
+    ['montant','client','pu'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('pages').value='1';
+    document.getElementById('totalLbl').textContent='—';
+  };
+}
+function openImpServicesModal(){
+  openModal(`<h3>Gérer les services d'impression</h3>
+    <div class="section-hint">Ajoutez, modifiez ou supprimez les types de services proposés dans le module Impressions & Photocopies.</div>
+    <div style="display:flex;gap:8px;margin-bottom:12px">
+      <input id="is_nom" placeholder="Nom du service" style="flex:1">
+      <button class="btn" id="is_add">+ Ajouter</button>
+    </div>
+    <table><thead><tr><th>Service</th><th></th></tr></thead><tbody id="is_tbody"></tbody></table>
+    <div id="is_empty"></div>
+    <div class="modal-actions"><button class="btn ghost" onclick="closeModal()">Fermer</button></div>`);
+  const drawIS=()=>{
+    document.getElementById('is_tbody').innerHTML=DATA.impressionServices.map(s=>`<tr>
+      <td><input value="${s.nom}" id="isn_${s.id}" style="border:1px solid var(--gray-mid);border-radius:6px;padding:5px 8px;font-size:13px;width:100%"></td>
+      <td style="white-space:nowrap"><button class="btn ghost sm" onclick="isSave('${s.id}')">✓</button> <button class="btn danger sm" onclick="isDel('${s.id}')">Suppr.</button></td>
+    </tr>`).join('');
+    document.getElementById('is_empty').innerHTML=DATA.impressionServices.length?'':'<div style="padding:14px;text-align:center;color:var(--ink-soft);font-size:13px">Aucun service.</div>';
+  };
+  drawIS();
+  document.getElementById('is_add').onclick=()=>{
+    const el=document.getElementById('is_nom');const nom=el.value.trim();
+    el.classList.remove('invalid');
+    if(!nom){el.classList.add('invalid');el.focus();toast('Indiquez un nom','warn');return;}
+    DATA.impressionServices.push({id:uid(),nom});
+    save();el.value='';drawIS();toast('Service ajouté ✓','ok');
+    renderImpressions();
+  };
+  window.isSave=id=>{
+    const s=DATA.impressionServices.find(x=>x.id===id);
+    const nom=document.getElementById('isn_'+id).value.trim();
+    if(!nom){toast('Le nom ne peut pas être vide','warn');return;}
+    s.nom=nom;save();drawIS();toast('Modifié ✓','ok');
+    renderImpressions();
+  };
+  window.isDel=id=>{
+    const s=DATA.impressionServices.find(x=>x.id===id);
+    if(confirm(`Supprimer "${s.nom}" ?`)){
+      DATA.impressionServices=DATA.impressionServices.filter(x=>x.id!==id);
+      save();drawIS();toast('Supprimé');
+      renderImpressions();
+    }
+  };
+}
+window.openImpServicesModal=openImpServicesModal;
+
+/* ===== FACTURES ===== */
+function renderFactures(){
+  const c=document.getElementById('content');
+  c.innerHTML=`<div class="toolbar">
+    <button class="btn" id="addBtn">+ Nouvelle facture / devis</button>
+    <select id="filterSt" style="width:160px"><option value="">Tous statuts</option><option>En instance</option><option>Payée</option></select>
+  </div>
+  <div class="card"><table><thead><tr><th>N°</th><th>Type</th><th>Client</th><th>Total TTC</th><th>Statut</th><th>Date</th><th>Actions</th></tr></thead><tbody id="tbody"></tbody></table><div id="emptyMsg"></div></div>`;
+  const draw=()=>{
+    const fl=document.getElementById('filterSt').value;
+    let rows=[...DATA.factures].reverse();
+    if(fl)rows=rows.filter(f=>(f.statut||'En instance')===fl);
+    document.getElementById('tbody').innerHTML=rows.map(f=>{
+      const st=f.statut||'En instance';
+      return`<tr><td class="mono">${f.numero}</td><td>${f.type}</td><td>${f.client}</td><td>${fmt(f.montant)}</td>
+      <td><span class="badge ${st==='Payée'?'ok':'warn'}" style="cursor:pointer" onclick="toggleFactureStatut('${f.id}')" title="Cliquer pour changer">${st}</span></td>
+      <td>${f.date}</td>
+      <td><button class="btn ghost sm" onclick="printFacture('${f.id}')">PDF</button> <button class="btn danger sm" onclick="delFacture('${f.id}')">Suppr.</button></td></tr>`;
+    }).join('');
+    document.getElementById('emptyMsg').innerHTML=rows.length?'':'<div class="empty">Aucun document.</div>';
+  };
+  draw();
+  document.getElementById('filterSt').onchange=draw;
+  window.toggleFactureStatut=id=>{const f=DATA.factures.find(x=>x.id===id);f.statut=f.statut==='Payée'?'En instance':'Payée';save();draw();toast(`Statut : ${f.statut}`);};
+  window.delFacture=id=>{if(confirm('Supprimer ?')){DATA.factures=DATA.factures.filter(f=>f.id!==id);save();draw();}};
+  document.getElementById('addBtn').onclick=()=>{
+    let lignes=[{desc:'',qte:1,pu:0}];
+    const tva=Number(DATA.settings.tva)||0;
+    const rl=()=>lignes.map((l,i)=>`<div style="display:grid;grid-template-columns:1fr 60px 110px 30px;gap:6px;margin-bottom:6px" data-row="${i}">
+      <input class="ln-desc" list="svcList" placeholder="Désignation" value="${l.desc}">
+      <input class="ln-qte" type="number" min="1" value="${l.qte}" title="Quantité">
+      <input class="ln-pu" type="number" value="${l.pu}" title="Prix unitaire">
+      <button type="button" class="btn danger sm ln-del">✕</button>
+    </div>`).join('');
+    openModal(`<h3>Nouveau document</h3>
+      <datalist id="svcList">${DATA.services.map(s=>`<option value="${s.nom}">`).join('')}</datalist>
+      <div class="formrow">
+        <div><label>Type</label><select id="f_type">${['Facture','Devis','Reçu','Avoir','Proforma'].map(t=>`<option>${t}</option>`).join('')}</select></div>
+        <div><label>Client *</label><input id="f_client" list="cliL2"><datalist id="cliL2">${DATA.clients.map(c=>`<option value="${c.nom} ${c.prenom||''}">`).join('')}</datalist></div>
+        <div><label>Date</label><input id="f_date" type="date" value="${todayISO()}"></div>
+        <div><label>Statut</label><select id="f_statut"><option>En instance</option><option>Payée</option></select></div>
+      </div>
+      <label>Lignes (Désignation / Qté / Prix unitaire)</label>
+      <div id="lignesBox" style="margin:8px 0">${rl()}</div>
+      <button type="button" class="btn ghost sm" id="addLigne">+ Ligne</button>
+      <div style="text-align:right;font-size:13px;margin-top:12px;line-height:2">
+        Sous-total : <b class="mono" id="st">—</b><br>
+        TVA (${tva}%) : <b class="mono" id="tvaAmt">—</b><br>
+        <span style="font-size:15px">Total TTC : <b class="mono" style="color:var(--blue)" id="ttc">—</b></span>
+      </div>
+      <div class="modal-actions"><button class="btn ghost" onclick="closeModal()">Annuler</button><button class="btn" id="saveBtn">Enregistrer</button></div>`);
+    const box=document.getElementById('lignesBox');
+    const recalc=()=>{
+      box.querySelectorAll('[data-row]').forEach((row,i)=>{
+        lignes[i].desc=row.querySelector('.ln-desc').value;
+        lignes[i].qte=Number(row.querySelector('.ln-qte').value)||0;
+        lignes[i].pu=Number(row.querySelector('.ln-pu').value)||0;
+      });
+      const st=lignes.reduce((s,l)=>s+l.qte*l.pu,0);
+      const tv=Math.round(st*tva/100);
+      document.getElementById('st').textContent=fmt(st);
+      document.getElementById('tvaAmt').textContent=fmt(tv);
+      document.getElementById('ttc').textContent=fmt(st+tv);
+    };
+    const wire=()=>{
+      box.innerHTML=rl();
+      box.querySelectorAll('.ln-desc').forEach(inp=>{
+        inp.oninput=()=>{
+          const s=DATA.services.find(x=>x.nom===inp.value);
+          if(s)inp.closest('[data-row]').querySelector('.ln-pu').value=s.prix;
+          recalc();
+        };
+      });
+      box.querySelectorAll('.ln-qte,.ln-pu').forEach(inp=>inp.oninput=recalc);
+      box.querySelectorAll('.ln-del').forEach((btn,i)=>btn.onclick=()=>{if(lignes.length>1){lignes.splice(i,1);wire();recalc();}});
+      recalc();
+    };
+    wire();
+    document.getElementById('addLigne').onclick=()=>{lignes.push({desc:'',qte:1,pu:0});wire();};
+    document.getElementById('saveBtn').onclick=()=>{
+      recalc();
+      const client=document.getElementById('f_client').value.trim();
+      if(!client){toast('Indiquez un client','warn');return;}
+      const vl=lignes.filter(l=>l.desc);
+      if(!vl.length){toast('Ajoutez au moins une ligne','warn');return;}
+      const sousTotal=vl.reduce((s,l)=>s+l.qte*l.pu,0);
+      const tv=Math.round(sousTotal*tva/100);
+      const type=document.getElementById('f_type').value;
+      const statut=document.getElementById('f_statut').value;
+      const date=document.getElementById('f_date').value;
+      const obj={id:uid(),type,client,date,lignes:vl,sousTotal,tva:tv,montant:sousTotal+tv,statut,numero:type.slice(0,3).toUpperCase()+'-'+Date.now().toString().slice(-6)};
+      DATA.factures.push(obj);
+      if(statut==='Payée'){
+        DATA.paiements.push({id:uid(),client,montant:obj.montant,mode:'Espèces',date,ref:obj.numero});
+        addCaisse('entree',`${type} ${obj.numero} — ${client}`,obj.montant,date);
+      }
+      save();closeModal();toast('Document créé ✓','ok');draw();
+    };
+  };
+  window.printFacture=id=>{
+    const f=DATA.factures.find(x=>x.id===id);
+    const s=DATA.settings;
+    const tva=Number(s.tva)||0;
+    const lines=[{k:'N°',v:f.numero},{k:'Client',v:f.client},{k:'Date',v:f.date},{k:'Statut',v:f.statut||'En instance'},'---',
+      {head:['Désignation','Qté','Prix unit.','Total'],x:[14,110,135,165]},
+      ...(f.lignes||[]).map(l=>({row:[l.desc.slice(0,45),String(l.qte),fmt(l.pu),fmt(l.qte*l.pu)],x:[14,110,135,165]})),
+      '---',{k:'Sous-total',v:fmt(f.sousTotal)},{k:`TVA (${tva}%)`,v:fmt(f.tva)},{k:'TOTAL TTC',v:fmt(f.montant)}];
+    const doc=makePDF(f.type.toUpperCase(),lines,`N° ${f.numero}`);
+    doc.save(`${f.type}_${f.numero}.pdf`);
+  };
+}
+
+/* ===== SERVICE PAGE ===== */
+function renderServicePage(svc){
+  const c=document.getElementById('content');
+  const factures=DATA.factures.filter(f=>(f.lignes||[]).some(l=>l.desc===svc.nom));
+  const total=factures.reduce((s,f)=>{return s+(f.lignes||[]).filter(l=>l.desc===svc.nom).reduce((ss,l)=>ss+l.qte*l.pu,0);},0);
+  c.innerHTML=`<div class="grid kpis" style="grid-template-columns:repeat(3,1fr);margin-bottom:16px">
+    <div class="card kpi"><div class="label">Total facturé</div><div class="value blue">${fmt(total)}</div></div>
+    <div class="card kpi"><div class="label">Factures</div><div class="value blue">${factures.length}</div></div>
+    <div class="card kpi"><div class="label">Prix unitaire</div><div class="value blue">${fmt(svc.prix)}</div></div>
+  </div>
+  <div class="card"><div class="panel-title"><h2>Factures contenant "${svc.nom}"</h2></div>
+    <table><thead><tr><th>N°</th><th>Client</th><th>Qté</th><th>Montant</th><th>Statut</th><th>Date</th></tr></thead><tbody>
+    ${factures.length?factures.map(f=>{
+      const l=(f.lignes||[]).find(x=>x.desc===svc.nom);
+      return`<tr><td class="mono">${f.numero}</td><td>${f.client}</td><td>${l?l.qte:'—'}</td><td>${fmt(l?l.qte*l.pu:0)}</td>
+      <td><span class="badge ${(f.statut||'En instance')==='Payée'?'ok':'warn'}">${f.statut||'En instance'}</span></td><td>${f.date}</td></tr>`;
+    }).join(''):'<tr><td colspan="6"><div class="empty">Aucune facture pour ce service.</div></td></tr>'}
+    </tbody></table></div>`;
+}
+
+/* ===== RAPPORTS ===== */
+function renderRapports(){
+  const month=todayISO().slice(0,7);
+  const payM=DATA.paiements.filter(p=>(p.date||'').slice(0,7)===month).reduce((s,p)=>s+Number(p.montant),0);
+  const byService=[
+    {l:'Formations',v:DATA.inscriptions.reduce((s,i)=>s+Number(i.paye||0),0)},
+    {l:'Impressions',v:DATA.impressions.reduce((s,i)=>s+Number(i.montant||0),0)},
+    {l:'Graphisme',v:DATA.graphisme.reduce((s,g)=>s+Number(g.prix||0),0)},
+    {l:'Maintenance',v:DATA.maintenance.reduce((s,m)=>s+Number(m.facture||0),0)},
+    {l:'Ventes',v:DATA.ventes.reduce((s,v)=>s+Number(v.total||0),0)},
+  ];
+  const c=document.getElementById('content');
+  c.innerHTML=`<div class="card" style="margin-bottom:16px"><div class="panel-title"><h2>CA du mois (${month})</h2></div><div class="value blue" style="font-size:28px">${fmt(payM)}</div></div>
+  <div class="card"><div class="panel-title"><h2>Répartition par activité</h2></div><canvas id="chartRep" height="130"></canvas></div>`;
+  new Chart(document.getElementById('chartRep'),{type:'doughnut',data:{labels:byService.map(b=>b.l),datasets:[{data:byService.map(b=>b.v),backgroundColor:[(DATA.settings.colors&&DATA.settings.colors.primary)||'#2563EB',(DATA.settings.colors&&DATA.settings.colors.ok)||'#16A34A',(DATA.settings.colors&&DATA.settings.colors.warn)||'#D97706',(DATA.settings.colors&&DATA.settings.colors.danger)||'#DC2626','#7C3AED']}]},options:{plugins:{legend:{position:'bottom'}}}});
+}
+
+/* ===== PARAMÈTRES ===== */
+/* ===== VERROUILLAGE PARAMÈTRES ===== */
+function renderParamLock(){
+  const c=document.getElementById('content');
+  c.innerHTML=`<div class="card" style="max-width:360px;margin:40px auto;text-align:center">
+    <div style="font-size:32px;margin-bottom:8px">🔒</div>
+    <h3 style="margin-top:0">Paramètres protégés</h3>
+    <div class="section-hint">Entrez le code de sécurité pour accéder aux paramètres.</div>
+    <input id="lockCode" type="password" maxlength="8" style="text-align:center;font-size:18px;letter-spacing:4px;margin-bottom:12px" placeholder="••••">
+    <button class="btn" id="unlockBtn" style="width:100%">Déverrouiller</button>
+  </div>`;
+  const codeEl=document.getElementById('lockCode');
+  const tryUnlock=()=>{
+    if(codeEl.value.trim()===DATA.settings.secCode){
+      paramUnlocked=true;toast('Accès autorisé ✓','ok');renderParametres();
+    }else{
+      codeEl.classList.add('invalid');codeEl.value='';codeEl.focus();
+      toast('Code incorrect','warn');
+    }
+  };
+  document.getElementById('unlockBtn').onclick=tryUnlock;
+  codeEl.addEventListener('keydown',e=>{if(e.key==='Enter')tryUnlock();});
+  codeEl.focus();
+}
+function renderParametres(){
+  const s=DATA.settings;const c=document.getElementById('content');
+  c.innerHTML=`<div class="card" style="max-width:580px">
+    <h3 style="margin-top:0">Informations de l'entreprise</h3>
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px">
+      <div id="logoPrev" style="width:64px;height:64px;border:1px dashed var(--gray-mid);border-radius:10px;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#fafafa">
+        ${s.logo?`<img src="${s.logo}" style="width:100%;height:100%;object-fit:contain">`:'<span style="font-size:10px;color:var(--ink-soft)">Logo</span>'}
+      </div>
+      <div><input type="file" id="p_logo" accept="image/*"><div class="section-hint" style="margin:4px 0 0">Apparaît sur les PDFs et le menu</div>
+      ${s.logo?`<button class="btn ghost sm" id="rmLogo" style="margin-top:4px">Retirer</button>`:''}</div>
+    </div>
+    <div class="formrow">
+      <div><label>Nom de l'entreprise</label><input id="p_nom" value="${s.nom}"></div>
+      <div><label>Adresse</label><input id="p_adresse" value="${s.adresse}"></div>
+      <div><label>Téléphone</label><input id="p_tel" value="${s.tel}"></div>
+      <div><label>WhatsApp</label><input id="p_whatsapp" value="${s.whatsapp}"></div>
+      <div><label>Email</label><input id="p_email" value="${s.email}"></div>
+      <div><label>Site Web</label><input id="p_site" value="${s.site}"></div>
+      <div><label>Devise</label><input id="p_devise" value="${s.devise}"></div>
+      <div><label>TVA (%)</label><input id="p_tva" type="number" value="${s.tva}"></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+      <input type="checkbox" id="p_dark" ${s.dark?'checked':''} style="width:auto"><label style="margin:0">Mode sombre</label>
+    </div>
+    <button class="btn" id="saveP">Enregistrer</button>
+    <hr style="margin:22px 0;border:none;border-top:1px solid var(--gray-mid)">
+    <h3>Apparence</h3>
+    <div class="section-hint">Personnalisez les couleurs utilisées dans toute l'application (boutons, menu, graphiques, badges...).</div>
+    <div class="formrow">
+      <div><label>Couleur principale</label><input type="color" id="col_primary" value="${(s.colors&&s.colors.primary)||'#2563EB'}" style="height:38px;padding:2px"></div>
+      <div><label>Couleur succès</label><input type="color" id="col_ok" value="${(s.colors&&s.colors.ok)||'#16A34A'}" style="height:38px;padding:2px"></div>
+      <div><label>Couleur danger</label><input type="color" id="col_danger" value="${(s.colors&&s.colors.danger)||'#DC2626'}" style="height:38px;padding:2px"></div>
+      <div><label>Couleur avertissement</label><input type="color" id="col_warn" value="${(s.colors&&s.colors.warn)||'#D97706'}" style="height:38px;padding:2px"></div>
+    </div>
+    <button class="btn" id="saveColors">Appliquer les couleurs</button>
+    <button class="btn ghost" id="resetColors" style="margin-left:8px">Réinitialiser</button>
+    <hr style="margin:22px 0;border:none;border-top:1px solid var(--gray-mid)">
+    <h3>Sécurité</h3>
+    <div class="section-hint">${s.secCode?'Un code de sécurité protège actuellement l\'accès à cette page.':'Protégez l\'accès à cette page Paramètres avec un code secret (4 à 8 caractères).'}</div>
+    <div class="formrow">
+      <div><label>${s.secCode?'Nouveau code':'Code de sécurité'}</label><input id="p_pin" type="password" maxlength="8" placeholder="${s.secCode?'••••':'Ex: 1234'}"></div>
+      <div><label>Confirmer le code</label><input id="p_pin2" type="password" maxlength="8"></div>
+    </div>
+    <button class="btn" id="savePin">${s.secCode?'Changer le code':'Activer la protection'}</button>
+    ${s.secCode?`<button class="btn ghost" id="removePin" style="margin-left:8px">Retirer la protection</button>`:''}
+    <hr style="margin:22px 0;border:none;border-top:1px solid var(--gray-mid)">
+    <h3>Services</h3>
+    <div class="section-hint">Ces services pré-remplissent les prix dans les factures et apparaissent dans le menu.</div>
+    <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+      <input id="ps_nom" placeholder="Nom du service" style="flex:1;min-width:130px">
+      <input id="ps_prix" type="number" placeholder="Prix (FCFA)" style="width:120px">
+      <button class="btn" id="ps_add">+ Ajouter</button>
+    </div>
+    <table id="ps_table"><thead><tr><th>Service</th><th>Prix</th><th></th></tr></thead><tbody id="ps_tbody"></tbody></table>
+    <div id="ps_empty"></div>
+    <hr style="margin:22px 0;border:none;border-top:1px solid var(--gray-mid)">
+    <h3>Modules</h3>
+    <div class="section-hint">Tous les modules (système et personnalisés) regroupés par section du menu. Cliquez sur une section pour l'ouvrir et gérer ses modules.</div>
+    <div style="margin-bottom:12px"><button class="btn" id="cm_add">+ Nouveau module</button></div>
+    <div id="modAccWrap"></div>
+    <hr style="margin:22px 0;border:none;border-top:1px solid var(--gray-mid)">
+    <button class="btn danger" id="resetAll">Réinitialiser toutes les données</button>
+  </div>`;
+  document.getElementById('p_logo').onchange=e=>{
+    const f=e.target.files[0];if(!f)return;
+    const r=new FileReader();r.onload=()=>{s.logo=r.result;save();updateBrand();renderParametres();toast('Logo mis à jour ✓','ok');};r.readAsDataURL(f);
+  };
+  const rm=document.getElementById('rmLogo');if(rm)rm.onclick=()=>{s.logo='';save();updateBrand();renderParametres();};
+  document.getElementById('saveP').onclick=()=>{
+    ['nom','adresse','tel','whatsapp','email','site','devise','tva'].forEach(k=>s[k]=document.getElementById('p_'+k).value);
+    s.dark=document.getElementById('p_dark').checked;
+    document.body.classList.toggle('dark',s.dark);
+    save();updateBrand();toast('Paramètres enregistrés ✓','ok');
+  };
+  document.getElementById('saveColors').onclick=()=>{
+    s.colors={
+      primary:document.getElementById('col_primary').value,
+      ok:document.getElementById('col_ok').value,
+      danger:document.getElementById('col_danger').value,
+      warn:document.getElementById('col_warn').value
+    };
+    applyColors();save();toast('Couleurs appliquées ✓','ok');
+  };
+  document.getElementById('resetColors').onclick=()=>{
+    s.colors={primary:'#2563EB',ok:'#16A34A',danger:'#DC2626',warn:'#D97706'};
+    applyColors();save();renderParametres();toast('Couleurs réinitialisées');
+  };
+  document.getElementById('savePin').onclick=()=>{
+    const p1El=document.getElementById('p_pin'),p2El=document.getElementById('p_pin2');
+    const p1=p1El.value.trim(),p2=p2El.value.trim();
+    p1El.classList.remove('invalid');p2El.classList.remove('invalid');
+    if(!p1){p1El.classList.add('invalid');p1El.focus();toast('Indiquez un code','warn');return;}
+    if(p1.length<4){p1El.classList.add('invalid');p1El.focus();toast('Le code doit contenir au moins 4 caractères','warn');return;}
+    if(p1!==p2){p2El.classList.add('invalid');p2El.focus();toast('Les deux codes ne correspondent pas','warn');return;}
+    s.secCode=p1;paramUnlocked=true;
+    save();toast('Code de sécurité enregistré ✓','ok');renderParametres();
+  };
+  const rmPinBtn=document.getElementById('removePin');
+  if(rmPinBtn)rmPinBtn.onclick=()=>{
+    if(confirm('Retirer la protection par code des paramètres ?')){
+      s.secCode='';paramUnlocked=true;save();toast('Protection retirée');renderParametres();
+    }
+  };
+  const drawPS=()=>{
+    document.getElementById('ps_tbody').innerHTML=DATA.services.map(sv=>`<tr>
+      <td><input value="${sv.nom}" id="psn_${sv.id}" style="border:1px solid var(--gray-mid);border-radius:6px;padding:5px 8px;font-size:13px;width:100%"></td>
+      <td><input type="number" value="${sv.prix}" id="psp_${sv.id}" style="border:1px solid var(--gray-mid);border-radius:6px;padding:5px 8px;font-size:13px;width:90px"></td>
+      <td style="white-space:nowrap">
+        <button class="btn ghost sm" onclick="psSave('${sv.id}')">✓</button>
+        <button class="btn danger sm" onclick="psDel('${sv.id}','${sv.nom}')">Suppr.</button>
+      </td></tr>`).join('');
+    document.getElementById('ps_empty').innerHTML=DATA.services.length?'':'<div style="padding:14px;text-align:center;color:var(--ink-soft);font-size:13px">Aucun service.</div>';
+  };
+  drawPS();
+  document.getElementById('ps_add').onclick=()=>{
+    const el=document.getElementById('ps_nom');const nom=el.value.trim();
+    el.classList.remove('invalid');if(!nom){el.classList.add('invalid');el.focus();toast('Indiquez un nom','warn');return;}
+    DATA.services.push({id:uid(),nom,prix:Number(document.getElementById('ps_prix').value)||0});
+    save();el.value='';document.getElementById('ps_prix').value='';drawPS();renderNav();toast('Service ajouté ✓','ok');
+  };
+  window.psSave=id=>{
+    const sv=DATA.services.find(x=>x.id===id);
+    const nom=document.getElementById('psn_'+id).value.trim();
+    if(!nom){toast('Le nom ne peut pas être vide','warn');return;}
+    sv.nom=nom;sv.prix=Number(document.getElementById('psp_'+id).value)||0;
+    save();drawPS();renderNav();toast('Modifié ✓','ok');
+  };
+  window.psDel=(id,nom)=>{
+    if(confirm(`Supprimer "${nom}" ?`)){
+      DATA.services=DATA.services.filter(s=>s.id!==id);
+      if(current==='svc_'+id)current='services';
+      save();drawPS();renderNav();toast('Supprimé');
+    }
+  };
+  const drawModulesAcc=()=>{
+    const groups=[{id:'ops',label:'Opérations'},{id:'stock',label:'Stock & Achats'},{id:'rh',label:'Ressources Humaines'},{id:'fin',label:'Finance & Admin'}];
+    const html=groups.map(g=>{
+      const fixedMods=MODULES_FIXES.filter(m=>m.group===g.id);
+      const customMods=DATA.modulesPerso.filter(m=>(m.group||'fin')===g.id);
+      const total=fixedMods.length+customMods.length;
+      const fixedRows=fixedMods.map(m=>{
+        const ov=DATA.moduleLabels[m.id]||{};
+        const hidden=DATA.hiddenModules.includes(m.id);
+        return `<tr style="${hidden?'opacity:.5':''}">
+          <td style="font-size:16px">${ov.icon||m.icon}</td>
+          <td>${ov.label||m.label} ${hidden?'<span class="badge warn">Masqué</span>':'<span class="badge info">Système</span>'}</td>
+          <td style="white-space:nowrap">
+            <button class="btn ghost sm" onclick="openFixedModuleEditForm('${m.id}')">Renommer</button>
+            ${hidden?`<button class="btn ok sm" onclick="showModule('${m.id}')">Afficher</button>`:`<button class="btn danger sm" onclick="hideModule('${m.id}')">Supprimer</button>`}
+          </td></tr>`;
+      }).join('');
+      const customRows=customMods.map(m=>`<tr>
+        <td style="font-size:16px">${m.icon||'📁'}</td>
+        <td>${m.label} <span class="badge ok">Personnalisé</span></td>
+        <td style="white-space:nowrap">
+          <button class="btn ghost sm" onclick="openModuleEditForm('${m.id}')">Renommer</button>
+          <button class="btn danger sm" onclick="delModule('${m.id}')">Suppr.</button>
+        </td></tr>`).join('');
+      const body=total?`<table><thead><tr><th></th><th>Module</th><th></th></tr></thead><tbody>${fixedRows}${customRows}</tbody></table>`:'<div style="padding:10px 4px;color:var(--ink-soft);font-size:13px">Aucun module dans cette section.</div>';
+      return `<div class="acc-group">
+        <button type="button" class="acc-header" data-grp="${g.id}">
+          <span>${g.label} <span class="acc-count">(${total})</span></span>
+          <span class="acc-chevron">▾</span>
+        </button>
+        <div class="acc-body" id="accBody_${g.id}">${body}</div>
+      </div>`;
+    }).join('');
+    document.getElementById('modAccWrap').innerHTML=html;
+    document.querySelectorAll('.acc-header').forEach(btn=>{
+      btn.onclick=()=>{
+        const body=document.getElementById('accBody_'+btn.dataset.grp);
+        const open=body.classList.toggle('open');
+        btn.classList.toggle('open',open);
+      };
+    });
+  };
+  drawModulesAcc();
+  document.getElementById('cm_add').onclick=()=>openModuleForm();
+  document.getElementById('resetAll').onclick=()=>{if(confirm('Supprimer TOUTES les données ?')){DATA=defaultData();save();render();}};
+}
+
+/* ===== INIT ===== */
+// Charger jsPDF de façon fiable sans CDN externe (utilise le script déjà chargé)
+// Pour les PDF on utilise une copie locale intégrée
+(function loadJsPDF(){
+  // On tente de charger jsPDF via un script dynamique pour éviter l'erreur "Script error"
+  if(typeof window.jspdf==='object'&&window.jspdf.jsPDF){window._jspdf=window.jspdf;return;}
+  if(typeof window.jsPDF==='function'){window._jspdf={jsPDF:window.jsPDF};return;}
+  const s=document.createElement('script');
+  s.src='https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+  s.onload=()=>{window._jspdf=window.jspdf||{jsPDF:window.jsPDF};};
+  s.onerror=()=>{
+    console.warn('jsPDF non disponible');
+    window._jspdf={jsPDF:function(){
+      return{text:()=>{},save:()=>toast('PDF indisponible','warn'),
+        addImage:()=>{},setFontSize:()=>{},setFont:()=>{},
+        setTextColor:()=>{},line:()=>{},addPage:()=>{},setLineWidth:()=>{}};
+    }};
+  };
+  document.head.appendChild(s);
+})();
+document.body.classList.toggle('dark',DATA.settings.dark);
+applyColors();
+document.getElementById('hamburgerBtn').onclick=()=>{
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebarOverlay').classList.toggle('open');
+};
+document.getElementById('sidebarOverlay').onclick=()=>{
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebarOverlay').classList.remove('open');
+};
+setInterval(()=>{const el=document.getElementById('clock');if(el)el.textContent=new Date().toLocaleString('fr-FR');},1000);
+render();
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('service-worker.js').catch(()=>{});
+  });
+}
+</script>
+</body>
+</html>
