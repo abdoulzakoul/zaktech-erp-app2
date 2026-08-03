@@ -111,7 +111,16 @@ input.invalid,select.invalid,textarea.invalid{border-color:var(--danger)!importa
 </style>
 </head>
 <body>
-<div class="app">
+<div id="licenseGate" style="display:none;min-height:100vh;align-items:center;justify-content:center;background:#F1F3F7;padding:20px">
+  <div class="card" style="max-width:380px;width:100%;text-align:center;padding:34px 28px">
+    <div style="font-size:38px;margin-bottom:10px">🔑</div>
+    <h2 style="margin:0 0 6px;font-family:'Sora',sans-serif;color:var(--ink)">ZAKTECH ERP</h2>
+    <div class="section-hint" style="margin-bottom:20px">Entrez votre code d'activation pour continuer.</div>
+    <input id="licenseInput" placeholder="Ex: ZAK-0001" style="text-align:center;font-size:16px;letter-spacing:2px;margin-bottom:12px;text-transform:uppercase;width:100%">
+    <button class="btn" id="licenseBtn" style="width:100%">Activer</button>
+  </div>
+</div>
+<div class="app" id="appRoot" style="display:none">
   <div class="sidebar-overlay" id="sidebarOverlay"></div>
   <div class="sidebar" id="sidebar">
     <div class="brand" id="brandBox"><span class="dot"></span>ZAKTECH ERP</div>
@@ -126,6 +135,15 @@ input.invalid,select.invalid,textarea.invalid{border-color:var(--danger)!importa
 <div class="toast" id="toast"></div>
 
 <script>
+/* ===== LICENCE ===== */
+/* Liste des codes d'activation valides — ajoutez une ligne "'CODE': 'Nom du client'" par nouveau client.
+   Pour révoquer un client (code partagé/revendu), supprimez sa ligne et renvoyez ce fichier sur GitHub. */
+const LICENSE_CODES = {
+  'ZAK-0001': 'Client Démo',
+  'ZAK-0002': '',
+  'ZAK-0003': ''
+};
+
 /* ===== UTILITAIRES ===== */
 const DB_KEY = 'zaktech_erp_v3';
 const uid = () => Math.random().toString(36).slice(2,9).toUpperCase();
@@ -1398,18 +1416,43 @@ function renderParametres(){
   };
   document.head.appendChild(s);
 })();
-document.body.classList.toggle('dark',DATA.settings.dark);
-applyColors();
-document.getElementById('hamburgerBtn').onclick=()=>{
-  document.getElementById('sidebar').classList.toggle('open');
-  document.getElementById('sidebarOverlay').classList.toggle('open');
-};
-document.getElementById('sidebarOverlay').onclick=()=>{
-  document.getElementById('sidebar').classList.remove('open');
-  document.getElementById('sidebarOverlay').classList.remove('open');
-};
-setInterval(()=>{const el=document.getElementById('clock');if(el)el.textContent=new Date().toLocaleString('fr-FR');},1000);
-render();
+function startApp(){
+  document.getElementById('licenseGate').style.display='none';
+  document.getElementById('appRoot').style.display='';
+  document.body.classList.toggle('dark',DATA.settings.dark);
+  applyColors();
+  document.getElementById('hamburgerBtn').onclick=()=>{
+    document.getElementById('sidebar').classList.toggle('open');
+    document.getElementById('sidebarOverlay').classList.toggle('open');
+  };
+  document.getElementById('sidebarOverlay').onclick=()=>{
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('sidebarOverlay').classList.remove('open');
+  };
+  setInterval(()=>{const el=document.getElementById('clock');if(el)el.textContent=new Date().toLocaleString('fr-FR');},1000);
+  render();
+}
+const savedLicense=localStorage.getItem('zaktech_license');
+if(savedLicense&&LICENSE_CODES.hasOwnProperty(savedLicense)){
+  startApp();
+}else{
+  document.getElementById('licenseGate').style.display='flex';
+  const tryActivate=()=>{
+    const el=document.getElementById('licenseInput');
+    const val=el.value.trim().toUpperCase();
+    el.classList.remove('invalid');
+    if(LICENSE_CODES.hasOwnProperty(val)){
+      localStorage.setItem('zaktech_license',val);
+      startApp();
+    }else{
+      el.classList.add('invalid');
+      toast('Code invalide','warn');
+    }
+  };
+  document.getElementById('licenseBtn').onclick=tryActivate;
+  document.getElementById('licenseInput').addEventListener('keydown',e=>{if(e.key==='Enter')tryActivate();});
+  document.getElementById('licenseInput').focus();
+}
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
     navigator.serviceWorker.register('service-worker.js').catch(()=>{});
