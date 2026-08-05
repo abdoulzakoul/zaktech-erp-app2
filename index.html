@@ -111,16 +111,7 @@ input.invalid,select.invalid,textarea.invalid{border-color:var(--danger)!importa
 </style>
 </head>
 <body>
-<div id="licenseGate" style="display:none;min-height:100vh;align-items:center;justify-content:center;background:#F1F3F7;padding:20px">
-  <div class="card" style="max-width:380px;width:100%;text-align:center;padding:34px 28px">
-    <div style="font-size:38px;margin-bottom:10px">🔑</div>
-    <h2 style="margin:0 0 6px;font-family:'Sora',sans-serif;color:var(--ink)">ZAKTECH ERP</h2>
-    <div class="section-hint" style="margin-bottom:20px">Entrez votre code d'activation pour continuer.</div>
-    <input id="licenseInput" placeholder="Ex: ZAK-0001" style="text-align:center;font-size:16px;letter-spacing:2px;margin-bottom:12px;text-transform:uppercase;width:100%">
-    <button class="btn" id="licenseBtn" style="width:100%">Activer</button>
-  </div>
-</div>
-<div class="app" id="appRoot" style="display:none">
+<div class="app">
   <div class="sidebar-overlay" id="sidebarOverlay"></div>
   <div class="sidebar" id="sidebar">
     <div class="brand" id="brandBox"><span class="dot"></span>ZAKTECH ERP</div>
@@ -135,16 +126,6 @@ input.invalid,select.invalid,textarea.invalid{border-color:var(--danger)!importa
 <div class="toast" id="toast"></div>
 
 <script>
-/* ===== LICENCE ===== */
-/* Liste des codes d'activation valides — ajoutez une ligne "'CODE': 'Nom du client'" par nouveau client.
-   Pour révoquer un client (code partagé/revendu), supprimez sa ligne et renvoyez ce fichier sur GitHub. */
-const LICENSE_CODES = {
-  'ZAK-0001': 'Client Démo',
-  'ZAK-0002': '',
-  'ZAK-0003': '',
-  'ZAK-3300': 'ALI'
-};
-
 /* ===== UTILITAIRES ===== */
 const DB_KEY = 'zaktech_erp_v3';
 const uid = () => Math.random().toString(36).slice(2,9).toUpperCase();
@@ -803,14 +784,52 @@ function renderInscriptions(){
 /* ===== PAIEMENTS ===== */
 function renderPaiements(){
   const c=document.getElementById('content');
+  let filteredPaiements = [...DATA.paiements];
+  
   c.innerHTML=`<div class="toolbar"><button class="btn" id="addBtn">+ Nouveau paiement</button></div>
+  <div class="card" style="margin-bottom:16px;background:#f9f9fd;padding:16px;border-radius:10px;">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:10px;">
+      <div><label>🔍 Recherche</label><input id="searchPay" type="text" placeholder="Client, Ref..." style="padding:8px"></div>
+      <div><label>💳 Mode</label><select id="modePay" style="padding:8px;"><option value="">Tous</option><option>Espèces</option><option>NITA</option><option>AMANA</option><option>Airtel Money</option><option>Moov Money</option><option>Banque</option><option>Carte</option></select></div>
+      <div><label>📅 Du</label><input id="dateFromPay" type="date" style="padding:8px;"></div>
+      <div><label>📅 Au</label><input id="dateToPay" type="date" style="padding:8px;"></div>
+      <div><label>💰 Min</label><input id="minPay" type="number" placeholder="0" style="padding:8px;"></div>
+      <div><label>💰 Max</label><input id="maxPay" type="number" placeholder="∞" style="padding:8px;"></div>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;">
+      <button class="btn ghost sm" onclick="document.getElementById('searchPay').value='';document.getElementById('modePay').value='';document.getElementById('dateFromPay').value='';document.getElementById('dateToPay').value='';document.getElementById('minPay').value='';document.getElementById('maxPay').value='';applyPayFilters();">🔄 Réinitialiser</button>
+      <button class="btn sm" onclick="applyPayFilters();">🔍 Filtrer</button>
+    </div>
+  </div>
   <div class="card"><table><thead><tr><th>Réf.</th><th>Client</th><th>Montant</th><th>Mode</th><th>Date</th><th>Actions</th></tr></thead><tbody id="tbody"></tbody></table><div id="emptyMsg"></div></div>`;
+  
   const draw=()=>{
-    document.getElementById('tbody').innerHTML=[...DATA.paiements].reverse().map(p=>`<tr>
+    document.getElementById('tbody').innerHTML=filteredPaiements.map(p=>`<tr>
       <td class="mono">${p.ref}</td><td>${p.client||'—'}</td><td>${fmt(p.montant)}</td><td>${p.mode}</td><td>${(p.date||'').slice(0,10)}</td>
       <td><button class="btn ghost sm" onclick="printRecu('${p.id}')">Reçu PDF</button></td></tr>`).join('');
-    document.getElementById('emptyMsg').innerHTML=DATA.paiements.length?'':'<div class="empty">Aucun paiement.</div>';
+    document.getElementById('emptyMsg').innerHTML=filteredPaiements.length?'':'<div class="empty">Aucun paiement trouvé.</div>';
   };
+  
+  window.applyPayFilters=()=>{
+    const search=(document.getElementById('searchPay').value||'').toLowerCase();
+    const mode=document.getElementById('modePay').value;
+    const dateFrom=document.getElementById('dateFromPay').value;
+    const dateTo=document.getElementById('dateToPay').value;
+    const minAmt=document.getElementById('minPay').value?Number(document.getElementById('minPay').value):null;
+    const maxAmt=document.getElementById('maxPay').value?Number(document.getElementById('maxPay').value):null;
+    
+    filteredPaiements=[...DATA.paiements].reverse().filter(p=>{
+      if(search && !(p.client?.toLowerCase().includes(search) || p.ref?.toLowerCase().includes(search))) return false;
+      if(mode && p.mode!==mode) return false;
+      if(dateFrom && (p.date||'').slice(0,10)<dateFrom) return false;
+      if(dateTo && (p.date||'').slice(0,10)>dateTo) return false;
+      if(minAmt!==null && Number(p.montant)<minAmt) return false;
+      if(maxAmt!==null && Number(p.montant)>maxAmt) return false;
+      return true;
+    });
+    draw();
+  };
+  
   draw();
   document.getElementById('addBtn').onclick=()=>{
     openModal(`<h3>Nouveau paiement</h3>
@@ -830,7 +849,7 @@ function renderPaiements(){
       const ref='PAY-'+Date.now().toString().slice(-6);
       DATA.paiements.push({id:uid(),client,montant,mode,date,ref});
       addCaisse('entree',`Paiement ${client||''}`,montant,date);
-      save();closeModal();toast('Paiement enregistré ✓','ok');draw();
+      save();closeModal();toast('Paiement enregistré ✓','ok');applyPayFilters();
     };
   };
   window.printRecu=id=>{
@@ -838,6 +857,14 @@ function renderPaiements(){
     const doc=makePDF('REÇU DE PAIEMENT',[{k:'N° reçu',v:p.ref},{k:'Client',v:p.client||'—'},{k:'Montant',v:fmt(p.montant)},{k:'Mode',v:p.mode},{k:'Date',v:(p.date||'').slice(0,10)}]);
     doc.save(`recu_${p.ref}.pdf`);
   };
+  
+  // Appliquer filtres au changement
+  document.getElementById('searchPay')?.addEventListener('input',applyPayFilters);
+  document.getElementById('modePay')?.addEventListener('change',applyPayFilters);
+  document.getElementById('dateFromPay')?.addEventListener('change',applyPayFilters);
+  document.getElementById('dateToPay')?.addEventListener('change',applyPayFilters);
+  document.getElementById('minPay')?.addEventListener('input',applyPayFilters);
+  document.getElementById('maxPay')?.addEventListener('input',applyPayFilters);
 }
 
 /* ===== CAISSE ===== */
@@ -846,19 +873,57 @@ function renderCaisse(){
   const eJ=DATA.caisse.filter(c=>c.type==='entree'&&df(c)===t).reduce((s,c)=>s+Number(c.montant),0);
   const sJ=DATA.caisse.filter(c=>c.type==='sortie'&&df(c)===t).reduce((s,c)=>s+Number(c.montant),0);
   const c=document.getElementById('content');
+  let filteredCaisse = [...DATA.caisse];
+  
   c.innerHTML=`<div class="grid kpis" style="grid-template-columns:repeat(3,1fr)">
     <div class="card kpi"><div class="label">Entrées du jour</div><div class="value ok">${fmt(eJ)}</div></div>
     <div class="card kpi"><div class="label">Sorties du jour</div><div class="value danger">${fmt(sJ)}</div></div>
     <div class="card kpi"><div class="label">Solde du jour</div><div class="value blue">${fmt(eJ-sJ)}</div></div>
   </div>
   <div class="toolbar"><button class="btn ok" id="addEntree">+ Entrée</button><button class="btn danger" id="addSortie">+ Sortie</button></div>
+  <div class="card" style="margin-bottom:16px;background:#f9f9fd;padding:16px;border-radius:10px;">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:10px;">
+      <div><label>🔍 Recherche</label><input id="searchCaisse" type="text" placeholder="Libellé..." style="padding:8px"></div>
+      <div><label>📊 Type</label><select id="typeCaisse" style="padding:8px;"><option value="">Tous</option><option value="entree">Entrées</option><option value="sortie">Sorties</option></select></div>
+      <div><label>📅 Du</label><input id="dateFromCaisse" type="date" style="padding:8px;"></div>
+      <div><label>📅 Au</label><input id="dateToCaisse" type="date" style="padding:8px;"></div>
+      <div><label>💰 Min</label><input id="minCaisse" type="number" placeholder="0" style="padding:8px;"></div>
+      <div><label>💰 Max</label><input id="maxCaisse" type="number" placeholder="∞" style="padding:8px;"></div>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;">
+      <button class="btn ghost sm" onclick="document.getElementById('searchCaisse').value='';document.getElementById('typeCaisse').value='';document.getElementById('dateFromCaisse').value='';document.getElementById('dateToCaisse').value='';document.getElementById('minCaisse').value='';document.getElementById('maxCaisse').value='';applyCaisseFilters();">🔄 Réinitialiser</button>
+      <button class="btn sm" onclick="applyCaisseFilters();">🔍 Filtrer</button>
+    </div>
+  </div>
   <div class="card"><table><thead><tr><th>Type</th><th>Libellé</th><th>Montant</th><th>Date</th></tr></thead><tbody id="tbody"></tbody></table><div id="emptyMsg"></div></div>`;
+  
   const draw=()=>{
-    document.getElementById('tbody').innerHTML=[...DATA.caisse].reverse().map(x=>`<tr>
+    document.getElementById('tbody').innerHTML=filteredCaisse.map(x=>`<tr>
       <td><span class="badge ${x.type==='entree'?'ok':'danger'}">${x.type==='entree'?'Entrée':'Sortie'}</span></td>
       <td>${x.libelle}</td><td>${fmt(x.montant)}</td><td>${df(x)}</td></tr>`).join('');
-    document.getElementById('emptyMsg').innerHTML=DATA.caisse.length?'':'<div class="empty">Aucun mouvement.</div>';
+    document.getElementById('emptyMsg').innerHTML=filteredCaisse.length?'':'<div class="empty">Aucun mouvement trouvé.</div>';
   };
+  
+  window.applyCaisseFilters=()=>{
+    const search=(document.getElementById('searchCaisse').value||'').toLowerCase();
+    const type=document.getElementById('typeCaisse').value;
+    const dateFrom=document.getElementById('dateFromCaisse').value;
+    const dateTo=document.getElementById('dateToCaisse').value;
+    const minAmt=document.getElementById('minCaisse').value?Number(document.getElementById('minCaisse').value):null;
+    const maxAmt=document.getElementById('maxCaisse').value?Number(document.getElementById('maxCaisse').value):null;
+    
+    filteredCaisse=[...DATA.caisse].reverse().filter(x=>{
+      if(search && !x.libelle?.toLowerCase().includes(search)) return false;
+      if(type && x.type!==type) return false;
+      if(dateFrom && (x.date||'').slice(0,10)<dateFrom) return false;
+      if(dateTo && (x.date||'').slice(0,10)>dateTo) return false;
+      if(minAmt!==null && Number(x.montant)<minAmt) return false;
+      if(maxAmt!==null && Number(x.montant)>maxAmt) return false;
+      return true;
+    });
+    draw();
+  };
+  
   draw();
   const openMove=(type)=>{
     openModal(`<h3>${type==='entree'?'Nouvelle entrée':'Nouvelle sortie'}</h3>
@@ -872,11 +937,19 @@ function renderCaisse(){
       const mt=Number(document.getElementById('m_mt').value)||0;
       if(!mt){toast('Indiquez un montant','warn');return;}
       addCaisse(type,document.getElementById('m_lib').value,mt,document.getElementById('m_dt').value);
-      save();closeModal();draw();toast('Mouvement enregistré ✓','ok');
+      save();closeModal();applyCaisseFilters();toast('Mouvement enregistré ✓','ok');
     };
   };
   document.getElementById('addEntree').onclick=()=>openMove('entree');
   document.getElementById('addSortie').onclick=()=>openMove('sortie');
+  
+  // Appliquer filtres au changement
+  document.getElementById('searchCaisse')?.addEventListener('input',applyCaisseFilters);
+  document.getElementById('typeCaisse')?.addEventListener('change',applyCaisseFilters);
+  document.getElementById('dateFromCaisse')?.addEventListener('change',applyCaisseFilters);
+  document.getElementById('dateToCaisse')?.addEventListener('change',applyCaisseFilters);
+  document.getElementById('minCaisse')?.addEventListener('input',applyCaisseFilters);
+  document.getElementById('maxCaisse')?.addEventListener('input',applyCaisseFilters);
 }
 
 /* ===== VENTES ===== */
@@ -1417,43 +1490,18 @@ function renderParametres(){
   };
   document.head.appendChild(s);
 })();
-function startApp(){
-  document.getElementById('licenseGate').style.display='none';
-  document.getElementById('appRoot').style.display='';
-  document.body.classList.toggle('dark',DATA.settings.dark);
-  applyColors();
-  document.getElementById('hamburgerBtn').onclick=()=>{
-    document.getElementById('sidebar').classList.toggle('open');
-    document.getElementById('sidebarOverlay').classList.toggle('open');
-  };
-  document.getElementById('sidebarOverlay').onclick=()=>{
-    document.getElementById('sidebar').classList.remove('open');
-    document.getElementById('sidebarOverlay').classList.remove('open');
-  };
-  setInterval(()=>{const el=document.getElementById('clock');if(el)el.textContent=new Date().toLocaleString('fr-FR');},1000);
-  render();
-}
-const savedLicense=localStorage.getItem('zaktech_license');
-if(savedLicense&&LICENSE_CODES.hasOwnProperty(savedLicense)){
-  startApp();
-}else{
-  document.getElementById('licenseGate').style.display='flex';
-  const tryActivate=()=>{
-    const el=document.getElementById('licenseInput');
-    const val=el.value.trim().toUpperCase();
-    el.classList.remove('invalid');
-    if(LICENSE_CODES.hasOwnProperty(val)){
-      localStorage.setItem('zaktech_license',val);
-      startApp();
-    }else{
-      el.classList.add('invalid');
-      toast('Code invalide','warn');
-    }
-  };
-  document.getElementById('licenseBtn').onclick=tryActivate;
-  document.getElementById('licenseInput').addEventListener('keydown',e=>{if(e.key==='Enter')tryActivate();});
-  document.getElementById('licenseInput').focus();
-}
+document.body.classList.toggle('dark',DATA.settings.dark);
+applyColors();
+document.getElementById('hamburgerBtn').onclick=()=>{
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebarOverlay').classList.toggle('open');
+};
+document.getElementById('sidebarOverlay').onclick=()=>{
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebarOverlay').classList.remove('open');
+};
+setInterval(()=>{const el=document.getElementById('clock');if(el)el.textContent=new Date().toLocaleString('fr-FR');},1000);
+render();
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
     navigator.serviceWorker.register('service-worker.js').catch(()=>{});
