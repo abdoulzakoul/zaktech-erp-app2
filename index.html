@@ -176,17 +176,19 @@ function inPeriod(dateStr,period,customMonth){
   }
   return true;
 }
-function periodFilterHTML(id){
+const MONTH_NAMES=['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+function monthLabel(ym){
+  if(!ym)return '';
+  const parts=ym.split('-').map(Number);
+  return `${MONTH_NAMES[parts[1]-1]} ${parts[0]}`;
+}
+function periodFilterHTML(id,def=''){
+  const opts=[['','— Choisir une période —'],['today',"Aujourd'hui"],['week','Cette semaine'],['month','Mois en cours'],['custom-month','Un mois précis…'],['all','Toutes les dates']];
   return `<span style="display:inline-flex;gap:6px;align-items:center">
     <select id="${id}" style="max-width:190px">
-      <option value="" selected>— Choisir une période —</option>
-      <option value="today">Aujourd'hui</option>
-      <option value="week">Cette semaine</option>
-      <option value="month">Mois en cours</option>
-      <option value="custom-month">Un mois précis…</option>
-      <option value="all">Toutes les dates</option>
+      ${opts.map(([v,l])=>`<option value="${v}"${v===def?' selected':''}>${l}</option>`).join('')}
     </select>
-    <input type="month" id="${id}_month" style="display:none;max-width:150px">
+    <input type="month" id="${id}_month" style="display:${def==='custom-month'?'inline-block':'none'};max-width:150px">
   </span>`;
 }
 function wirePeriodFilter(id,onChange){
@@ -438,6 +440,8 @@ function openForm(key,id=null){
     if(!ok){toast('Remplissez les champs obligatoires (encadrés en rouge)','warn');first&&first.focus();return;}
     // Graphisme : reste = prix - avance
     if(key==='graphisme'){obj.reste=Math.max(0,(Number(obj.prix)||0)-(Number(obj.avance)||0));}
+    // Date de création automatique (pour les rapports), même si le formulaire n'a pas de champ date visible
+    if(!id&&!obj.date)obj.date=todayISO();
     if(!id)DATA[key].push(obj);
     save();closeModal();toast('Enregistré ✓','ok');render();
     if(key==='services')renderNav();
@@ -449,15 +453,30 @@ function renderCrud(key){
   // Colonnes affichées avec libellés (fallback pour les colonnes calculées absentes de "fields", ex: "reste")
   const colLabelFallback={reste:'Reste',seuil:'Seuil'};
   const colLabels=schema.cols.map(cl=>schema.fields.find(f=>f.k===cl)||{k:cl,l:colLabelFallback[cl]||(cl.charAt(0).toUpperCase()+cl.slice(1))});
+  const isStock=key==='stock';
+  const categories=isStock?[...new Set(DATA.stock.map(r=>r.categorie).filter(Boolean))].sort((a,b)=>a.localeCompare(b)):[];
   c.innerHTML=`<div class="toolbar">
     <input type="search" id="search" placeholder="Rechercher...">
+    ${isStock?`<select id="catFilter" style="max-width:180px">
+      <option value="">Toutes les catégories</option>
+      ${categories.map(cat=>`<option value="${cat}">${cat}</option>`).join('')}
+    </select>
+    <label style="display:flex;align-items:center;gap:6px;font-size:13px;white-space:nowrap;padding:0 6px">
+      <input type="checkbox" id="lowStockFilter"> Stock bas uniquement
+    </label>`:''}
     <button class="btn" id="addBtn">+ Ajouter</button>
     <button class="btn ghost" id="exBtn">Export Excel</button>
   </div>
   <div class="card"><table><thead><tr>${colLabels.map(f=>`<th>${f.l}</th>`).join('')}<th>Actions</th></tr></thead><tbody id="tbody"></tbody></table><div id="emptyMsg"></div></div>`;
-  const draw=(filter='')=>{
+  const draw=()=>{
+    const filter=document.getElementById('search').value||'';
     let rows=DATA[key];
     if(filter)rows=rows.filter(r=>JSON.stringify(r).toLowerCase().includes(filter.toLowerCase()));
+    if(isStock){
+      const cat=document.getElementById('catFilter').value;
+      if(cat)rows=rows.filter(r=>r.categorie===cat);
+      if(document.getElementById('lowStockFilter').checked)rows=rows.filter(r=>Number(r.qte)<=Number(r.seuil));
+    }
     document.getElementById('tbody').innerHTML=rows.map(r=>`<tr>
       ${schema.cols.map(cl=>{
         const f=schema.fields.find(x=>x.k===cl);
@@ -470,10 +489,14 @@ function renderCrud(key){
       }).join('')}
       <td><button class="btn ghost sm" onclick="openForm('${key}','${r.id}')">Modifier</button> <button class="btn danger sm" onclick="delRow('${key}','${r.id}')">Suppr.</button></td>
     </tr>`).join('');
-    document.getElementById('emptyMsg').innerHTML=rows.length?'':'<div class="empty">Aucune donnée.</div>';
+    document.getElementById('emptyMsg').innerHTML=rows.length?'':'<div class="empty">Aucune donnée pour ce filtre.</div>';
   };
   draw();
-  document.getElementById('search').oninput=e=>draw(e.target.value);
+  document.getElementById('search').oninput=draw;
+  if(isStock){
+    document.getElementById('catFilter').onchange=draw;
+    document.getElementById('lowStockFilter').onchange=draw;
+  }
   document.getElementById('addBtn').onclick=()=>openForm(key);
   document.getElementById('exBtn').onclick=()=>{
     const ws=XLSX.utils.json_to_sheet(DATA[key]);const wb=XLSX.utils.book_new();
@@ -1299,19 +1322,40 @@ function renderServicePage(svc){
 
 /* ===== RAPPORTS ===== */
 function renderRapports(){
-  const month=todayISO().slice(0,7);
-  const payM=DATA.paiements.filter(p=>(p.date||'').slice(0,7)===month).reduce((s,p)=>s+Number(p.montant),0);
-  const byService=[
-    {l:'Formations',v:DATA.inscriptions.reduce((s,i)=>s+Number(i.paye||0),0)},
-    {l:'Impressions',v:DATA.impressions.reduce((s,i)=>s+Number(i.montant||0),0)},
-    {l:'Graphisme',v:DATA.graphisme.reduce((s,g)=>s+Number(g.prix||0),0)},
-    {l:'Maintenance',v:DATA.maintenance.reduce((s,m)=>s+Number(m.facture||0),0)},
-    {l:'Ventes',v:DATA.ventes.reduce((s,v)=>s+Number(v.total||0),0)},
-  ];
   const c=document.getElementById('content');
-  c.innerHTML=`<div class="card" style="margin-bottom:16px"><div class="panel-title"><h2>CA du mois (${month})</h2></div><div class="value blue" style="font-size:28px">${fmt(payM)}</div></div>
+  c.innerHTML=`<div class="toolbar">${periodFilterHTML('repPeriod','month')}</div>
+  <div class="card" id="caCard" style="margin-bottom:16px"></div>
   <div class="card"><div class="panel-title"><h2>Répartition par activité</h2></div><canvas id="chartRep" height="130"></canvas></div>`;
-  new Chart(document.getElementById('chartRep'),{type:'doughnut',data:{labels:byService.map(b=>b.l),datasets:[{data:byService.map(b=>b.v),backgroundColor:[(DATA.settings.colors&&DATA.settings.colors.primary)||'#2563EB',(DATA.settings.colors&&DATA.settings.colors.ok)||'#16A34A',(DATA.settings.colors&&DATA.settings.colors.warn)||'#D97706',(DATA.settings.colors&&DATA.settings.colors.danger)||'#DC2626','#7C3AED']}]},options:{plugins:{legend:{position:'bottom'}}}});
+  let chartInstance=null;
+  const draw=()=>{
+    const {period,customMonth}=currentPeriod('repPeriod');
+    let label='';
+    if(period==='today')label="Aujourd'hui";
+    else if(period==='week')label='Cette semaine';
+    else if(period==='month')label=`Mois en cours — ${monthLabel(todayISO().slice(0,7))}`;
+    else if(period==='custom-month')label=customMonth?monthLabel(customMonth):'';
+    else if(period==='all')label='Toutes les dates';
+    if(period===''||(period==='custom-month'&&!customMonth)){
+      document.getElementById('caCard').innerHTML='<div class="empty" style="padding:10px 0">Choisissez une période ci-dessus pour afficher le chiffre d\'affaires.</div>';
+      document.getElementById('chartRep').style.display='none';
+      if(chartInstance){chartInstance.destroy();chartInstance=null;}
+      return;
+    }
+    document.getElementById('chartRep').style.display='';
+    const payTotal=DATA.paiements.filter(p=>inPeriod(p.date,period,customMonth)).reduce((s,p)=>s+Number(p.montant||0),0);
+    document.getElementById('caCard').innerHTML=`<div class="panel-title"><h2>CA — ${label}</h2></div><div class="value blue" style="font-size:28px">${fmt(payTotal)}</div>`;
+    const byService=[
+      {l:'Formations',v:DATA.inscriptions.filter(i=>inPeriod(i.date,period,customMonth)).reduce((s,i)=>s+Number(i.paye||0),0)},
+      {l:'Impressions',v:DATA.impressions.filter(x=>inPeriod(x.date,period,customMonth)).reduce((s,i2)=>s+Number(i2.montant||0),0)},
+      {l:'Graphisme',v:DATA.graphisme.filter(g=>inPeriod(g.date,period,customMonth)).reduce((s,g)=>s+Number(g.prix||0),0)},
+      {l:'Maintenance',v:DATA.maintenance.filter(m=>inPeriod(m.date,period,customMonth)).reduce((s,m)=>s+Number(m.facture||0),0)},
+      {l:'Ventes',v:DATA.ventes.filter(v=>inPeriod(v.date,period,customMonth)).reduce((s,v)=>s+Number(v.total||0),0)},
+    ];
+    if(chartInstance)chartInstance.destroy();
+    chartInstance=new Chart(document.getElementById('chartRep'),{type:'doughnut',data:{labels:byService.map(b=>b.l),datasets:[{data:byService.map(b=>b.v),backgroundColor:[(DATA.settings.colors&&DATA.settings.colors.primary)||'#2563EB',(DATA.settings.colors&&DATA.settings.colors.ok)||'#16A34A',(DATA.settings.colors&&DATA.settings.colors.warn)||'#D97706',(DATA.settings.colors&&DATA.settings.colors.danger)||'#DC2626','#7C3AED']}]},options:{plugins:{legend:{position:'bottom'}}}});
+  };
+  draw();
+  wirePeriodFilter('repPeriod',draw);
 }
 
 /* ===== PARAMÈTRES ===== */
