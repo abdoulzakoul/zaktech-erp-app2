@@ -1,4 +1,4 @@
-const CACHE_NAME = 'zaktech-erp-v1';
+const CACHE_NAME = 'zaktech-erp-v2';
 const ASSETS = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', (event) => {
@@ -18,17 +18,15 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+  // RÉSEAU D'ABORD : toujours essayer de récupérer la dernière version en ligne.
+  // Le cache ne sert que de secours si l'appareil est hors connexion.
   event.respondWith(
-    caches.match(event.request).then((cached) => {
-      if (cached) return cached;
-      return fetch(event.request).then((res) => {
-        // Ne met en cache que les requêtes du même site (pas les CDN externes type Chart.js)
-        if (event.request.url.startsWith(self.location.origin)) {
-          const resClone = res.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, resClone));
-        }
-        return res;
-      }).catch(() => cached);
-    })
+    fetch(event.request).then((res) => {
+      if (event.request.url.startsWith(self.location.origin)) {
+        const resClone = res.clone();
+        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, resClone));
+      }
+      return res;
+    }).catch(() => caches.match(event.request))
   );
 });
