@@ -159,23 +159,59 @@ const DB_KEY = 'zaktech_erp_v3';
 const uid = () => Math.random().toString(36).slice(2,9).toUpperCase();
 const todayISO = () => new Date().toISOString().slice(0,10);
 const fmt = n => Math.round(Number(n)||0).toString().replace(/\B(?=(\d{3})+(?!\d))/g,' ') + ' FCFA';
-function inPeriod(dateStr,period){
-  if(period==='all'||!dateStr)return period==='all';
+function inPeriod(dateStr,period,customMonth){
+  if(period==='')return false;
+  if(period==='all')return true;
+  if(!dateStr)return false;
   const d=new Date(dateStr);
   if(isNaN(d))return false;
   const now=new Date();
   if(period==='today')return d.toDateString()===now.toDateString();
   if(period==='week'){const start=new Date(now);start.setDate(now.getDate()-now.getDay());start.setHours(0,0,0,0);return d>=start;}
   if(period==='month')return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear();
+  if(period==='custom-month'){
+    if(!customMonth)return false;
+    const parts=customMonth.split('-').map(Number);
+    return d.getFullYear()===parts[0]&&(d.getMonth()+1)===parts[1];
+  }
   return true;
 }
 function periodFilterHTML(id){
-  return `<select id="${id}" style="max-width:170px">
-    <option value="all">Toutes les dates</option>
-    <option value="today">Aujourd'hui</option>
-    <option value="week">Cette semaine</option>
-    <option value="month">Ce mois</option>
-  </select>`;
+  return `<span style="display:inline-flex;gap:6px;align-items:center">
+    <select id="${id}" style="max-width:190px">
+      <option value="" selected>— Choisir une période —</option>
+      <option value="today">Aujourd'hui</option>
+      <option value="week">Cette semaine</option>
+      <option value="month">Mois en cours</option>
+      <option value="custom-month">Un mois précis…</option>
+      <option value="all">Toutes les dates</option>
+    </select>
+    <input type="month" id="${id}_month" style="display:none;max-width:150px">
+  </span>`;
+}
+function wirePeriodFilter(id,onChange){
+  const sel=document.getElementById(id);
+  const monthInput=document.getElementById(id+'_month');
+  sel.onchange=()=>{
+    const isCustom=sel.value==='custom-month';
+    monthInput.style.display=isCustom?'inline-block':'none';
+    if(isCustom&&!monthInput.value){
+      const now=new Date();
+      monthInput.value=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+    }
+    onChange();
+  };
+  monthInput.onchange=onChange;
+}
+function currentPeriod(id){
+  const sel=document.getElementById(id);
+  const monthInput=document.getElementById(id+'_month');
+  return {period:sel?sel.value:'', customMonth:monthInput?monthInput.value:''};
+}
+function periodEmptyMsg(period){
+  return period===''
+    ? '<div class="empty">Choisissez une période ci-dessus pour afficher l\'historique.</div>'
+    : '<div class="empty">Aucun résultat pour ce filtre.</div>';
 }
 function toast(msg,type=''){const t=document.getElementById('toast');t.textContent=msg;t.style.background=type==='ok'?'#16A34A':type==='warn'?'#D97706':'#0F172A';t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show'),2600);}
 function openModal(html){document.getElementById('modalBody').innerHTML=html;document.getElementById('modalBg').classList.add('open');}
@@ -755,10 +791,10 @@ function renderInscriptions(){
   <div class="card"><table><thead><tr><th>Client</th><th>Formation</th><th>Prix</th><th>Payé</th><th>Reste</th><th>Date</th><th>Actions</th></tr></thead><tbody id="tbody"></tbody></table><div id="emptyMsg"></div></div>`;
   const draw=()=>{
     const q=(document.getElementById('search').value||'').toLowerCase();
-    const period=document.getElementById('periodFilter').value;
+    const {period,customMonth}=currentPeriod('periodFilter');
     const rows=DATA.inscriptions.filter(i=>{
       const fo=DATA.formations.find(f=>f.id===i.formationId);
-      return inPeriod(i.date,period) &&
+      return inPeriod(i.date,period,customMonth) &&
         (!q || (i.client||'').toLowerCase().includes(q) || (fo&&fo.nom||'').toLowerCase().includes(q));
     });
     document.getElementById('tbody').innerHTML=rows.map(i=>{
@@ -768,11 +804,11 @@ function renderInscriptions(){
       <td>${reste>0?`<span class="badge warn">${fmt(reste)}</span>`:'<span class="badge ok">Soldé</span>'}</td><td>${i.date}</td>
       <td><button class="btn ghost sm" onclick="printInscription('${i.id}')">Fiche PDF</button> <button class="btn danger sm" onclick="delInscription('${i.id}')">Suppr.</button></td></tr>`;
     }).join('');
-    document.getElementById('emptyMsg').innerHTML=rows.length?'':'<div class="empty">Aucune inscription pour ce filtre.</div>';
+    document.getElementById('emptyMsg').innerHTML=rows.length?'':periodEmptyMsg(period);
   };
   draw();
   document.getElementById('search').oninput=draw;
-  document.getElementById('periodFilter').onchange=draw;
+  wirePeriodFilter('periodFilter',draw);
   // Gérer formations
   document.getElementById('mgrForm').onclick=()=>{
     const refresh=()=>{
@@ -850,19 +886,19 @@ function renderPaiements(){
   <div class="card"><table><thead><tr><th>Réf.</th><th>Client</th><th>Montant</th><th>Mode</th><th>Date</th><th>Actions</th></tr></thead><tbody id="tbody"></tbody></table><div id="emptyMsg"></div></div>`;
   const draw=()=>{
     const q=(document.getElementById('search').value||'').toLowerCase();
-    const period=document.getElementById('periodFilter').value;
+    const {period,customMonth}=currentPeriod('periodFilter');
     const rows=[...DATA.paiements].reverse().filter(p=>
-      inPeriod(p.date,period) &&
+      inPeriod(p.date,period,customMonth) &&
       (!q || (p.client||'').toLowerCase().includes(q) || (p.ref||'').toLowerCase().includes(q) || (p.mode||'').toLowerCase().includes(q))
     );
     document.getElementById('tbody').innerHTML=rows.map(p=>`<tr>
       <td class="mono">${p.ref}</td><td>${p.client||'—'}</td><td>${fmt(p.montant)}</td><td>${p.mode}</td><td>${(p.date||'').slice(0,10)}</td>
       <td><button class="btn ghost sm" onclick="printRecu('${p.id}')">Reçu PDF</button></td></tr>`).join('');
-    document.getElementById('emptyMsg').innerHTML=rows.length?'':'<div class="empty">Aucun paiement pour ce filtre.</div>';
+    document.getElementById('emptyMsg').innerHTML=rows.length?'':periodEmptyMsg(period);
   };
   draw();
   document.getElementById('search').oninput=draw;
-  document.getElementById('periodFilter').onchange=draw;
+  wirePeriodFilter('periodFilter',draw);
   document.getElementById('addBtn').onclick=()=>{
     openModal(`<h3>Nouveau paiement</h3>
       <div class="formrow">
@@ -910,18 +946,18 @@ function renderCaisse(){
   <div class="card"><table><thead><tr><th>Type</th><th>Libellé</th><th>Montant</th><th>Date</th></tr></thead><tbody id="tbody"></tbody></table><div id="emptyMsg"></div></div>`;
   const draw=()=>{
     const q=(document.getElementById('search').value||'').toLowerCase();
-    const period=document.getElementById('periodFilter').value;
+    const {period,customMonth}=currentPeriod('periodFilter');
     const rows=[...DATA.caisse].reverse().filter(x=>
-      inPeriod(x.date,period) && (!q || (x.libelle||'').toLowerCase().includes(q))
+      inPeriod(x.date,period,customMonth) && (!q || (x.libelle||'').toLowerCase().includes(q))
     );
     document.getElementById('tbody').innerHTML=rows.map(x=>`<tr>
       <td><span class="badge ${x.type==='entree'?'ok':'danger'}">${x.type==='entree'?'Entrée':'Sortie'}</span></td>
       <td>${x.libelle}</td><td>${fmt(x.montant)}</td><td>${df(x)}</td></tr>`).join('');
-    document.getElementById('emptyMsg').innerHTML=rows.length?'':'<div class="empty">Aucun mouvement pour ce filtre.</div>';
+    document.getElementById('emptyMsg').innerHTML=rows.length?'':periodEmptyMsg(period);
   };
   draw();
   document.getElementById('search').oninput=draw;
-  document.getElementById('periodFilter').onchange=draw;
+  wirePeriodFilter('periodFilter',draw);
   const openMove=(type)=>{
     openModal(`<h3>${type==='entree'?'Nouvelle entrée':'Nouvelle sortie'}</h3>
       <div class="formrow">
@@ -952,18 +988,18 @@ function renderVentes(){
   <div class="card"><table><thead><tr><th>Article</th><th>Client</th><th>Qté vendue</th><th>Prix unit.</th><th>Total</th><th>Date</th></tr></thead><tbody id="tbody"></tbody></table><div id="emptyMsg"></div></div>`;
   const draw=()=>{
     const q=(document.getElementById('search').value||'').toLowerCase();
-    const period=document.getElementById('periodFilter').value;
+    const {period,customMonth}=currentPeriod('periodFilter');
     const rows=[...DATA.ventes].reverse().filter(v=>
-      inPeriod(v.date,period) &&
+      inPeriod(v.date,period,customMonth) &&
       (!q || (v.article||'').toLowerCase().includes(q) || (v.client||'').toLowerCase().includes(q))
     );
     document.getElementById('tbody').innerHTML=rows.map(v=>`<tr>
       <td>${v.article}</td><td>${v.client||'—'}</td><td>${v.qte}</td><td>${fmt(v.prix)}</td><td>${fmt(v.total)}</td><td>${(v.date||'').slice(0,10)}</td></tr>`).join('');
-    document.getElementById('emptyMsg').innerHTML=rows.length?'':'<div class="empty">Aucune vente pour ce filtre.</div>';
+    document.getElementById('emptyMsg').innerHTML=rows.length?'':periodEmptyMsg(period);
   };
   draw();
   document.getElementById('search').oninput=draw;
-  document.getElementById('periodFilter').onchange=draw;
+  wirePeriodFilter('periodFilter',draw);
   document.getElementById('addBtn').onclick=()=>{
     if(!DATA.stock.length){toast('Aucun article en stock','warn');return;}
     openModal(`<h3>Nouvelle vente</h3>
@@ -1054,17 +1090,17 @@ function renderImpressions(){
   document.getElementById('montant').oninput=e=>document.getElementById('totalLbl').textContent=e.target.value?fmt(Number(e.target.value)):'—';
   const draw=()=>{
     const q=(document.getElementById('search').value||'').toLowerCase();
-    const period=document.getElementById('periodFilter').value;
+    const {period,customMonth}=currentPeriod('periodFilter');
     const rows=[...DATA.impressions].reverse().filter(x=>
-      inPeriod(x.date,period) &&
+      inPeriod(x.date,period,customMonth) &&
       (!q || (x.client||'').toLowerCase().includes(q) || (x.svc||'').toLowerCase().includes(q))
     );
     document.getElementById('tbody').innerHTML=rows.map(x=>`<tr><td>${x.client||'—'}</td><td>${x.svc}</td><td>${x.details||''}</td><td>${fmt(x.montant)}</td><td>${(x.date||'').slice(0,10)}</td></tr>`).join('');
-    document.getElementById('emptyMsg').innerHTML=rows.length?'':'<div class="empty">Aucune opération pour ce filtre.</div>';
+    document.getElementById('emptyMsg').innerHTML=rows.length?'':periodEmptyMsg(period);
   };
   draw();
   document.getElementById('search').oninput=draw;
-  document.getElementById('periodFilter').onchange=draw;
+  wirePeriodFilter('periodFilter',draw);
   document.getElementById('save').onclick=()=>{
     const montant=Number(document.getElementById('montant').value)||0;
     if(!montant){toast('Indiquez un montant','warn');document.getElementById('montant').focus();return;}
