@@ -243,7 +243,7 @@ function applyColors(){
 /* ===== DONNÉES ===== */
 function defaultData(){
   return {
-    settings:{nom:'ZAKTECH',adresse:'Niamey, Niger',tel:'',whatsapp:'',email:'',site:'',devise:'FCFA',tva:0,dark:false,logo:'',secCode:'',colors:{primary:'#2563EB',ok:'#16A34A',danger:'#DC2626',warn:'#D97706'}},
+    settings:{nom:'ZAKTECH',adresse:'Niamey, Niger',tel:'',whatsapp:'',email:'',site:'',devise:'FCFA',tva:0,dark:false,logo:'',secCode:'',rvCoef:1.6,colors:{primary:'#2563EB',ok:'#16A34A',danger:'#DC2626',warn:'#D97706'}},
     clients:[],formations:[],inscriptions:[],paiements:[],caisse:[],
     impressions:[],graphisme:[],maintenance:[],stock:[],fournisseurs:[],employes:[],
     factures:[],services:[],ventes:[],
@@ -429,7 +429,7 @@ function openForm(key,id=null){
     <div class="formrow">${schema.fields.map(f=>`<div><label>${f.l}${f.req?' *':''}</label>${fieldInput(f,row[f.k])}</div>`).join('')}</div>
     <div class="modal-actions"><button class="btn ghost" onclick="closeModal()">Annuler</button><button class="btn" id="saveBtn">Enregistrer</button></div>`);
   document.getElementById('saveBtn').onclick=()=>{
-    const obj=id?{...row}:{id:uid()};
+    const obj=id?row:{id:uid()};
     let ok=true,first=null;
     schema.fields.forEach(f=>{
       const el=document.getElementById('f_'+f.k);
@@ -565,7 +565,7 @@ function openCustomForm(modId,id=null){
     <div class="formrow">${m.fields.map(f=>`<div><label>${f.l}${f.req?' *':''}</label>${fieldInput(f,row[f.k])}</div>`).join('')}</div>
     <div class="modal-actions"><button class="btn ghost" onclick="closeModal()">Annuler</button><button class="btn" id="saveCustomBtn">Enregistrer</button></div>`);
   document.getElementById('saveCustomBtn').onclick=()=>{
-    const obj=id?{...row}:{id:uid()};
+    const obj=id?row:{id:uid()};
     let ok=true,first=null;
     m.fields.forEach(f=>{
       const el=document.getElementById('f_'+f.k);
@@ -1103,7 +1103,7 @@ function renderVentes(){
 /* ===== IMPRESSIONS ===== */
 function renderImpressions(){
   const c=document.getElementById('content');
-  c.innerHTML=`<div class="section-hint">Saisissez le prix unitaire librement. "× Calculer" multiplie par le nombre de pages (×1.6 si recto-verso).</div>
+  c.innerHTML=`<div class="section-hint">Saisissez le prix unitaire librement. "× Calculer" multiplie par le nombre de pages (×${DATA.settings.rvCoef||1.6} si recto-verso — réglable dans Paramètres).</div>
   <div class="card" style="max-width:560px;margin-bottom:18px">
     <div class="formrow">
       <div><label>Service</label><div style="display:flex;gap:6px">
@@ -1133,7 +1133,7 @@ function renderImpressions(){
     const pu=Number(document.getElementById('pu').value)||0;
     const pages=Number(document.getElementById('pages').value)||1;
     let total=pu*pages;
-    if(document.getElementById('rv').value==='Recto-verso')total=Math.round(total*1.6);
+    if(document.getElementById('rv').value==='Recto-verso')total=Math.round(total*(Number(DATA.settings.rvCoef)||1.6));
     document.getElementById('montant').value=total;
     document.getElementById('totalLbl').textContent=fmt(total);
   };
@@ -1429,7 +1429,9 @@ function renderParametres(){
       <div><label>Site Web</label><input id="p_site" value="${s.site}"></div>
       <div><label>Devise</label><input id="p_devise" value="${s.devise}"></div>
       <div><label>TVA (%)</label><input id="p_tva" type="number" value="${s.tva}"></div>
+      <div><label>Coefficient recto-verso</label><input id="p_rvCoef" type="number" step="0.1" value="${s.rvCoef||1.6}"></div>
     </div>
+    <div class="section-hint" style="margin-top:-10px">Utilisé dans le calculateur du module Impressions : prix × pages × ce coefficient si "Recto-verso" est choisi.</div>
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
       <input type="checkbox" id="p_dark" ${s.dark?'checked':''} style="width:auto"><label style="margin:0">Mode sombre</label>
     </div>
@@ -1519,6 +1521,7 @@ function renderParametres(){
   const rm=document.getElementById('rmLogo');if(rm)rm.onclick=()=>{s.logo='';save();updateBrand();renderParametres();};
   document.getElementById('saveP').onclick=()=>{
     ['nom','adresse','tel','whatsapp','email','site','devise','tva'].forEach(k=>s[k]=document.getElementById('p_'+k).value);
+    s.rvCoef=Number(document.getElementById('p_rvCoef').value)||1.6;
     s.dark=document.getElementById('p_dark').checked;
     document.body.classList.toggle('dark',s.dark);
     save();updateBrand();toast('Paramètres enregistrés ✓','ok');
