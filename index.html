@@ -471,11 +471,20 @@ function renderCrud(key){
   const draw=()=>{
     const filter=document.getElementById('search').value||'';
     let rows=DATA[key];
-    if(filter)rows=rows.filter(r=>JSON.stringify(r).toLowerCase().includes(filter.toLowerCase()));
+    let stockNoFilter=false;
     if(isStock){
       const cat=document.getElementById('catFilter').value;
-      if(cat)rows=rows.filter(r=>r.categorie===cat);
-      if(document.getElementById('lowStockFilter').checked)rows=rows.filter(r=>Number(r.qte)<=Number(r.seuil));
+      const lowOnly=document.getElementById('lowStockFilter').checked;
+      stockNoFilter=!filter&&!cat&&!lowOnly;
+      if(stockNoFilter){
+        rows=[];
+      }else{
+        if(filter)rows=rows.filter(r=>JSON.stringify(r).toLowerCase().includes(filter.toLowerCase()));
+        if(cat)rows=rows.filter(r=>r.categorie===cat);
+        if(lowOnly)rows=rows.filter(r=>Number(r.qte)<=Number(r.seuil));
+      }
+    }else if(filter){
+      rows=rows.filter(r=>JSON.stringify(r).toLowerCase().includes(filter.toLowerCase()));
     }
     document.getElementById('tbody').innerHTML=rows.map(r=>`<tr>
       ${schema.cols.map(cl=>{
@@ -489,7 +498,9 @@ function renderCrud(key){
       }).join('')}
       <td><button class="btn ghost sm" onclick="openForm('${key}','${r.id}')">Modifier</button> <button class="btn danger sm" onclick="delRow('${key}','${r.id}')">Suppr.</button></td>
     </tr>`).join('');
-    document.getElementById('emptyMsg').innerHTML=rows.length?'':'<div class="empty">Aucune donnée pour ce filtre.</div>';
+    document.getElementById('emptyMsg').innerHTML=rows.length?'':(stockNoFilter
+      ?'<div class="empty">Recherchez un article, choisissez une catégorie, ou cochez « Stock bas uniquement » pour afficher le stock.</div>'
+      :'<div class="empty">Aucune donnée pour ce filtre.</div>');
   };
   draw();
   document.getElementById('search').oninput=draw;
@@ -779,27 +790,43 @@ function makePDF(title, lines, subtitle=''){
 
 /* ===== DASHBOARD ===== */
 function renderDashboard(){
-  const t=todayISO();const month=t.slice(0,7);
-  const df=x=>(x.date||'').slice(0,10);
-  const payToday=DATA.paiements.filter(p=>df(p)===t).reduce((s,p)=>s+Number(p.montant),0);
-  const payMonth=DATA.paiements.filter(p=>df(p).startsWith(month)).reduce((s,p)=>s+Number(p.montant),0);
-  const depMonth=DATA.caisse.filter(c=>c.type==='sortie'&&df(c).startsWith(month)).reduce((s,c)=>s+Number(c.montant),0);
-  const kpis=[
-    {l:'CA du jour',v:fmt(payToday),cls:'blue'},{l:'CA du mois',v:fmt(payMonth),cls:'blue'},
-    {l:'Clients',v:DATA.clients.length,cls:'ok'},{l:'Inscriptions',v:DATA.inscriptions.length,cls:'ok'},
-    {l:'Réparations en cours',v:DATA.maintenance.filter(m=>m.etat==='En réparation').length,cls:'warn'},
-    {l:'Graphisme en cours',v:DATA.graphisme.filter(g=>g.etat==='En cours').length,cls:'warn'},
-    {l:'Dépenses mois',v:fmt(depMonth),cls:'danger'},{l:'Bénéfice mois',v:fmt(payMonth-depMonth),cls:'blue'},
-  ];
   const c=document.getElementById('content');
-  c.innerHTML=`<div class="grid kpis">${kpis.map(k=>`<div class="card kpi"><div class="label">${k.l}</div><div class="value ${k.cls}">${k.v}</div></div>`).join('')}</div>
+  c.innerHTML=`<div class="toolbar" style="margin-bottom:14px">${periodFilterHTML('dashPeriod','month')}</div>
+  <div class="grid kpis" id="kpiGrid"></div>
   <div class="grid charts">
     <div class="card"><div class="panel-title"><h2>Paiements (7 j)</h2></div><canvas id="chartPay" height="170"></canvas></div>
     <div class="card"><div class="panel-title"><h2>Caisse (7 j)</h2></div><canvas id="chartCaisse" height="170"></canvas></div>
   </div>`;
+  const df=x=>(x.date||'').slice(0,10);
   const days=[...Array(7)].map((_,i)=>{const d=new Date();d.setDate(d.getDate()-(6-i));return d.toISOString().slice(0,10);});
   new Chart(document.getElementById('chartPay'),{type:'line',data:{labels:days.map(d=>d.slice(5)),datasets:[{data:days.map(d=>DATA.paiements.filter(p=>df(p)===d).reduce((s,p)=>s+Number(p.montant),0)),borderColor:'#2563EB',backgroundColor:'rgba(37,99,235,.12)',fill:true,tension:.35}]},options:{plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}});
   new Chart(document.getElementById('chartCaisse'),{type:'bar',data:{labels:days.map(d=>d.slice(5)),datasets:[{label:'Entrées',data:days.map(d=>DATA.caisse.filter(c=>c.type==='entree'&&df(c)===d).reduce((s,c)=>s+Number(c.montant),0)),backgroundColor:'#16A34A'},{label:'Sorties',data:days.map(d=>DATA.caisse.filter(c=>c.type==='sortie'&&df(c)===d).reduce((s,c)=>s+Number(c.montant),0)),backgroundColor:'#DC2626'}]},options:{plugins:{legend:{position:'bottom'}},scales:{y:{beginAtZero:true}}}});
+  const draw=()=>{
+    const {period,customMonth}=currentPeriod('dashPeriod');
+    const t=todayISO();
+    const payToday=DATA.paiements.filter(p=>df(p)===t).reduce((s,p)=>s+Number(p.montant),0);
+    let periodLabel='';
+    if(period==='today')periodLabel="Aujourd'hui";
+    else if(period==='week')periodLabel='Cette semaine';
+    else if(period==='month')periodLabel='Mois en cours';
+    else if(period==='custom-month')periodLabel=customMonth?monthLabel(customMonth):'';
+    else if(period==='all')periodLabel='Toutes les dates';
+    const noChoice=period===''||(period==='custom-month'&&!customMonth);
+    const payPeriod=noChoice?0:DATA.paiements.filter(p=>inPeriod(p.date,period,customMonth)).reduce((s,p)=>s+Number(p.montant),0);
+    const depPeriod=noChoice?0:DATA.caisse.filter(x=>x.type==='sortie'&&inPeriod(x.date,period,customMonth)).reduce((s,x)=>s+Number(x.montant),0);
+    const kpis=[
+      {l:'CA du jour',v:fmt(payToday),cls:'blue'},
+      {l:noChoice?'CA — choisir période':`CA — ${periodLabel}`,v:noChoice?'—':fmt(payPeriod),cls:'blue'},
+      {l:'Clients',v:DATA.clients.length,cls:'ok'},{l:'Inscriptions',v:DATA.inscriptions.length,cls:'ok'},
+      {l:'Réparations en cours',v:DATA.maintenance.filter(m=>m.etat==='En réparation').length,cls:'warn'},
+      {l:'Graphisme en cours',v:DATA.graphisme.filter(g=>g.etat==='En cours').length,cls:'warn'},
+      {l:noChoice?'Dépenses — choisir période':`Dépenses — ${periodLabel}`,v:noChoice?'—':fmt(depPeriod),cls:'danger'},
+      {l:noChoice?'Bénéfice — choisir période':`Bénéfice — ${periodLabel}`,v:noChoice?'—':fmt(payPeriod-depPeriod),cls:'blue'},
+    ];
+    document.getElementById('kpiGrid').innerHTML=kpis.map(k=>`<div class="card kpi"><div class="label">${k.l}</div><div class="value ${k.cls}">${k.v}</div></div>`).join('');
+  };
+  draw();
+  wirePeriodFilter('dashPeriod',draw);
 }
 
 /* ===== INSCRIPTIONS ===== */
