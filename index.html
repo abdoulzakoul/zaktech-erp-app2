@@ -1750,6 +1750,7 @@ document.getElementById('li_btn').onclick=()=>{
 };
 document.getElementById('li_pass').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('li_btn').onclick();});
 
+let authFlowManual=false;
 document.getElementById('su_btn').onclick=async()=>{
   const name=document.getElementById('su_name').value.trim();
   const email=document.getElementById('su_email').value.trim();
@@ -1764,11 +1765,15 @@ document.getElementById('su_btn').onclick=async()=>{
   if(isCreate&&!coname){errEl.textContent="Indiquez le nom de l'entreprise.";return;}
   if(!isCreate&&!cocode){errEl.textContent="Indiquez le code entreprise.";return;}
   const btn=document.getElementById('su_btn');btn.disabled=true;btn.textContent='Création...';
+  authFlowManual=true;
+  const timeoutGuard=setTimeout(()=>{
+    if(btn.disabled){btn.disabled=false;btn.textContent='Créer le compte';errEl.textContent="La création prend trop de temps. Vérifiez votre connexion et réessayez.";authFlowManual=false;}
+  },15000);
   try{
     let targetCompanyId=null;
     if(!isCreate){
       const q=await db.collection('companies').where('joinCode','==',cocode).limit(1).get();
-      if(q.empty){btn.disabled=false;btn.textContent='Créer le compte';errEl.textContent='Code entreprise introuvable.';return;}
+      if(q.empty){clearTimeout(timeoutGuard);btn.disabled=false;btn.textContent='Créer le compte';errEl.textContent='Code entreprise introuvable.';authFlowManual=false;return;}
       targetCompanyId=q.docs[0].id;
     }
     const cred=await auth.createUserWithEmailAndPassword(email,pass);
@@ -1777,13 +1782,23 @@ document.getElementById('su_btn').onclick=async()=>{
       const coRef=db.collection('companies').doc();
       targetCompanyId=coRef.id;
       await coRef.set({name:coname,joinCode:genJoinCode(),createdAt:Date.now()});
-      await coRef.collection('data').doc('main').set(defaultData());
+      // Le compte utilisateur doit être créé AVANT d'écrire les données de l'entreprise
+      // (les règles de sécurité vérifient l'appartenance via ce document utilisateur).
       await db.collection('users').doc(uidUser).set({email,name,companyId:targetCompanyId,role:'admin'});
+      await coRef.collection('data').doc('main').set(defaultData());
+      window.CURRENT_COMPANY={name:coname,joinCode:(await coRef.get()).data().joinCode};
     }else{
       await db.collection('users').doc(uidUser).set({email,name,companyId:targetCompanyId,role:'membre'});
+      const coDoc=await db.collection('companies').doc(targetCompanyId).get();
+      if(coDoc.exists)window.CURRENT_COMPANY={name:coDoc.data().name,joinCode:coDoc.data().joinCode};
     }
-    // onAuthStateChanged prendra le relais pour charger les données
+    window.CURRENT_USER={uid:uidUser,email,name,role:isCreate?'admin':'membre',companyId:targetCompanyId};
+    clearTimeout(timeoutGuard);
+    authFlowManual=false;
+    subscribeToCompanyData(targetCompanyId);
   }catch(err){
+    clearTimeout(timeoutGuard);
+    authFlowManual=false;
     btn.disabled=false;btn.textContent='Créer le compte';
     errEl.textContent=err.code==='auth/email-already-in-use'?'Cet email est déjà utilisé.':'Erreur : '+err.message;
   }
@@ -1796,6 +1811,7 @@ window.logout=()=>{
 };
 
 auth.onAuthStateChanged(user=>{
+  if(authFlowManual)return; // l'inscription/connexion en cours gère déjà tout manuellement
   if(user){
     db.collection('users').doc(user.uid).get().then(doc=>{
       if(!doc.exists){auth.signOut();return;}
