@@ -14,9 +14,6 @@
 <meta name="apple-mobile-web-app-title" content="ZAKTECH">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
 <style>
 :root{--blue:#2563EB;--blue-dark:#1D4ED8;--gray:#F1F3F7;--gray-mid:#E4E8F0;--ink:#0F172A;--ink-soft:#5B6478;--danger:#DC2626;--ok:#16A34A;--warn:#D97706;--radius:14px;--shadow:0 8px 24px -8px rgba(15,23,42,.12);}
@@ -125,35 +122,12 @@ body.privacy-mode .kpi .label{
 </head>
 <body>
 <div id="licenseGate" style="display:none;min-height:100vh;align-items:center;justify-content:center;background:#F1F3F7;padding:20px">
-  <div class="card" style="max-width:400px;width:100%;padding:30px 26px">
-    <div style="text-align:center;margin-bottom:18px">
-      <div style="font-size:34px;margin-bottom:6px">🔑</div>
-      <h2 style="margin:0 0 4px;font-family:'Sora',sans-serif;color:var(--ink)">ZAKTECH ERP</h2>
-      <div class="section-hint" id="authSubtitle" style="margin:0">Connectez-vous à votre entreprise.</div>
-    </div>
-
-    <div id="authLoginView">
-      <div style="margin-bottom:10px"><label>Email</label><input id="li_email" type="email" placeholder="vous@exemple.com"></div>
-      <div style="margin-bottom:14px"><label>Mot de passe</label><input id="li_pass" type="password"></div>
-      <button class="btn" id="li_btn" style="width:100%;margin-bottom:10px">Se connecter</button>
-      <div id="authError" style="color:var(--danger);font-size:13px;text-align:center;min-height:16px;margin-bottom:6px"></div>
-      <div style="text-align:center;font-size:13px">Pas encore de compte ? <a href="#" id="goSignup" style="color:var(--blue);font-weight:600">Créer un compte</a></div>
-    </div>
-
-    <div id="authSignupView" style="display:none">
-      <div style="margin-bottom:10px"><label>Nom complet</label><input id="su_name" placeholder="Votre nom"></div>
-      <div style="margin-bottom:10px"><label>Email</label><input id="su_email" type="email" placeholder="vous@exemple.com"></div>
-      <div style="margin-bottom:14px"><label>Mot de passe (6 caractères min.)</label><input id="su_pass" type="password"></div>
-      <div class="formrow" style="margin-bottom:12px">
-        <label style="display:flex;align-items:center;gap:6px;font-size:13px;border:1px solid var(--gray-mid);border-radius:8px;padding:9px"><input type="radio" name="cotype" value="create" checked> Créer mon entreprise</label>
-        <label style="display:flex;align-items:center;gap:6px;font-size:13px;border:1px solid var(--gray-mid);border-radius:8px;padding:9px"><input type="radio" name="cotype" value="join"> Rejoindre une entreprise</label>
-      </div>
-      <div id="su_createBox" style="margin-bottom:14px"><label>Nom de l'entreprise</label><input id="su_coname" placeholder="Ex: ZAKTECH"></div>
-      <div id="su_joinBox" style="display:none;margin-bottom:14px"><label>Code entreprise</label><input id="su_cocode" placeholder="Ex: A1B2C3" style="text-transform:uppercase"></div>
-      <button class="btn" id="su_btn" style="width:100%;margin-bottom:10px">Créer le compte</button>
-      <div id="authError2" style="color:var(--danger);font-size:13px;text-align:center;min-height:16px;margin-bottom:6px"></div>
-      <div style="text-align:center;font-size:13px">Déjà un compte ? <a href="#" id="goLogin" style="color:var(--blue);font-weight:600">Se connecter</a></div>
-    </div>
+  <div class="card" style="max-width:380px;width:100%;text-align:center;padding:34px 28px">
+    <div style="font-size:38px;margin-bottom:10px">🔑</div>
+    <h2 style="margin:0 0 6px;font-family:'Sora',sans-serif;color:var(--ink)">ZAKTECH ERP</h2>
+    <div class="section-hint" style="margin-bottom:20px">Entrez votre code d'activation pour continuer.</div>
+    <input id="licenseInput" placeholder="Ex: ZAK-0001" style="text-align:center;font-size:16px;letter-spacing:2px;margin-bottom:12px;text-transform:uppercase;width:100%">
+    <button class="btn" id="licenseBtn" style="width:100%">Activer</button>
   </div>
 </div>
 <div class="app" id="appRoot" style="display:none">
@@ -171,28 +145,14 @@ body.privacy-mode .kpi .label{
 <div class="toast" id="toast"></div>
 
 <script>
-/* ===== FIREBASE ===== */
-const firebaseConfig = {
-  apiKey: "AIzaSyAtuCjU-flq6lnLmWnymCo34xiuSXG-8bQ",
-  authDomain: "zaktech-app.firebaseapp.com",
-  projectId: "zaktech-app",
-  storageBucket: "zaktech-app.firebasestorage.app",
-  messagingSenderId: "328472349592",
-  appId: "1:328472349592:web:8c7879c6d914598f7979ed",
-  measurementId: "G-T7RD9Q4GFK"
+/* ===== LICENCE ===== */
+/* Liste des codes d'activation valides — ajoutez une ligne "'CODE': 'Nom du client'" par nouveau client.
+   Pour révoquer un client (code partagé/revendu), supprimez sa ligne et renvoyez ce fichier sur GitHub. */
+const LICENSE_CODES = {
+  'ZAK-0001': 'Client Démo',
+  'ZAK-0002': '',
+  'ZAK-0003': ''
 };
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.firestore();
-let companyId = null;
-let dataDocRef = null;
-let isRemoteUpdate = false;
-let firstSnapshot = true;
-function genJoinCode(){
-  const chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  let s='';for(let i=0;i<6;i++)s+=chars[Math.floor(Math.random()*chars.length)];
-  return s;
-}
 
 /* ===== UTILITAIRES ===== */
 const DB_KEY = 'zaktech_erp_v3';
@@ -303,42 +263,16 @@ function defaultData(){
     ]
   };
 }
-let DATA=defaultData();
-function applyMigration(){
-  const def=defaultData();
-  Object.keys(def).forEach(k=>{if(DATA[k]===undefined)DATA[k]=def[k];});
-  if(DATA.settings)Object.keys(def.settings).forEach(k=>{if(DATA.settings[k]===undefined)DATA.settings[k]=def.settings[k];});
-}
+let DATA;
+try{DATA=JSON.parse(localStorage.getItem(DB_KEY)||'null')||defaultData();}
+catch(e){DATA=defaultData();}
+// Migration
+(function(){const def=defaultData();Object.keys(def).forEach(k=>{if(DATA[k]===undefined)DATA[k]=def[k];});if(DATA.settings)Object.keys(def.settings).forEach(k=>{if(DATA.settings[k]===undefined)DATA.settings[k]=def.settings[k];});})();
 
 let STORAGE_OK = true;
 function save(){
   try{localStorage.setItem(DB_KEY,JSON.stringify(DATA));}
-  catch(e){if(STORAGE_OK){STORAGE_OK=false;toast('⚠️ Sauvegarde locale impossible (stockage bloqué)','warn');}}
-  if(dataDocRef&&!isRemoteUpdate){
-    dataDocRef.set(DATA).catch(()=>{toast('⚠️ Synchronisation impossible (vérifiez votre connexion)','warn');});
-  }
-}
-
-function subscribeToCompanyData(cid){
-  companyId=cid;
-  dataDocRef=db.collection('companies').doc(cid).collection('data').doc('main');
-  dataDocRef.onSnapshot(doc=>{
-    if(!doc.exists)return;
-    isRemoteUpdate=true;
-    DATA=doc.data();
-    applyMigration();
-    try{localStorage.setItem(DB_KEY,JSON.stringify(DATA));}catch(e){}
-    isRemoteUpdate=false;
-    if(firstSnapshot){
-      firstSnapshot=false;
-      startApp();
-    }else if(document.getElementById('appRoot').style.display!=='none'){
-      applyColors();
-      document.body.classList.toggle('dark',DATA.settings.dark);
-      render();
-      toast('Données synchronisées ✓','ok');
-    }
-  },()=>{toast('⚠️ Erreur de synchronisation avec le serveur','warn');});
+  catch(e){if(STORAGE_OK){STORAGE_OK=false;toast('⚠️ Sauvegarde impossible (stockage bloqué)','warn');}}
 }
 
 /* ===== CAISSE HELPER ===== */
@@ -495,7 +429,7 @@ function openForm(key,id=null){
     <div class="formrow">${schema.fields.map(f=>`<div><label>${f.l}${f.req?' *':''}</label>${fieldInput(f,row[f.k])}</div>`).join('')}</div>
     <div class="modal-actions"><button class="btn ghost" onclick="closeModal()">Annuler</button><button class="btn" id="saveBtn">Enregistrer</button></div>`);
   document.getElementById('saveBtn').onclick=()=>{
-    const obj=id?row:{id:uid()};
+    const obj=id?{...row}:{id:uid()};
     let ok=true,first=null;
     schema.fields.forEach(f=>{
       const el=document.getElementById('f_'+f.k);
@@ -631,7 +565,7 @@ function openCustomForm(modId,id=null){
     <div class="formrow">${m.fields.map(f=>`<div><label>${f.l}${f.req?' *':''}</label>${fieldInput(f,row[f.k])}</div>`).join('')}</div>
     <div class="modal-actions"><button class="btn ghost" onclick="closeModal()">Annuler</button><button class="btn" id="saveCustomBtn">Enregistrer</button></div>`);
   document.getElementById('saveCustomBtn').onclick=()=>{
-    const obj=id?row:{id:uid()};
+    const obj=id?{...row}:{id:uid()};
     let ok=true,first=null;
     m.fields.forEach(f=>{
       const el=document.getElementById('f_'+f.k);
@@ -1169,7 +1103,7 @@ function renderVentes(){
 /* ===== IMPRESSIONS ===== */
 function renderImpressions(){
   const c=document.getElementById('content');
-  c.innerHTML=`<div class="section-hint">Saisissez librement le prix unitaire (le tarif recto-verso, s'il diffère, se règle simplement en changeant ce prix). "× Calculer" multiplie prix × pages, sans coefficient automatique.</div>
+  c.innerHTML=`<div class="section-hint">Saisissez le prix unitaire librement. "× Calculer" multiplie par le nombre de pages (×1.6 si recto-verso).</div>
   <div class="card" style="max-width:560px;margin-bottom:18px">
     <div class="formrow">
       <div><label>Service</label><div style="display:flex;gap:6px">
@@ -1198,7 +1132,8 @@ function renderImpressions(){
   document.getElementById('calcBtn').onclick=()=>{
     const pu=Number(document.getElementById('pu').value)||0;
     const pages=Number(document.getElementById('pages').value)||1;
-    const total=pu*pages;
+    let total=pu*pages;
+    if(document.getElementById('rv').value==='Recto-verso')total=Math.round(total*1.6);
     document.getElementById('montant').value=total;
     document.getElementById('totalLbl').textContent=fmt(total);
   };
@@ -1520,15 +1455,6 @@ function renderParametres(){
     <button class="btn" id="savePin">${s.secCode?'Changer le code':'Activer la protection'}</button>
     ${s.secCode?`<button class="btn ghost" id="removePin" style="margin-left:8px">Retirer la protection</button>`:''}
     <hr style="margin:22px 0;border:none;border-top:1px solid var(--gray-mid)">
-    <h3>Équipe</h3>
-    <div class="section-hint">Toute personne avec ce code peut créer un compte et rejoindre votre entreprise — les données seront alors partagées et synchronisées en temps réel entre tous les comptes.</div>
-    <div class="formrow">
-      <div><label>Entreprise</label><input value="${(window.CURRENT_COMPANY&&window.CURRENT_COMPANY.name)||'—'}" disabled></div>
-      <div><label>Code entreprise (à partager)</label><input value="${(window.CURRENT_COMPANY&&window.CURRENT_COMPANY.joinCode)||'—'}" disabled style="font-weight:700;letter-spacing:2px"></div>
-    </div>
-    <div class="section-hint">Connecté en tant que <b>${(window.CURRENT_USER&&window.CURRENT_USER.name)||''}</b> (${(window.CURRENT_USER&&window.CURRENT_USER.email)||''}) — ${(window.CURRENT_USER&&window.CURRENT_USER.role==='admin')?'Administrateur':'Membre'}</div>
-    <button class="btn danger" id="logoutBtn" style="margin-top:10px">Se déconnecter</button>
-    <hr style="margin:22px 0;border:none;border-top:1px solid var(--gray-mid)">
     <h3>Services</h3>
     <div class="section-hint">Ces services pré-remplissent les prix dans les factures et apparaissent dans le menu.</div>
     <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
@@ -1626,7 +1552,6 @@ function renderParametres(){
       s.secCode='';paramUnlocked=true;save();toast('Protection retirée');renderParametres();
     }
   };
-  document.getElementById('logoutBtn').onclick=()=>window.logout();
   const drawPS=()=>{
     document.getElementById('ps_tbody').innerHTML=DATA.services.map(sv=>`<tr>
       <td><input value="${sv.nom}" id="psn_${sv.id}" style="border:1px solid var(--gray-mid);border-radius:6px;padding:5px 8px;font-size:13px;width:100%"></td>
@@ -1725,110 +1650,6 @@ function renderParametres(){
   };
   document.head.appendChild(s);
 })();
-/* ===== AUTHENTIFICATION ===== */
-document.getElementById('goSignup').onclick=e=>{e.preventDefault();document.getElementById('authLoginView').style.display='none';document.getElementById('authSignupView').style.display='block';document.getElementById('authSubtitle').textContent='Créez votre compte pour commencer.';};
-document.getElementById('goLogin').onclick=e=>{e.preventDefault();document.getElementById('authSignupView').style.display='none';document.getElementById('authLoginView').style.display='block';document.getElementById('authSubtitle').textContent='Connectez-vous à votre entreprise.';};
-document.querySelectorAll('input[name="cotype"]').forEach(r=>{
-  r.onchange=()=>{
-    const isCreate=document.querySelector('input[name="cotype"]:checked').value==='create';
-    document.getElementById('su_createBox').style.display=isCreate?'block':'none';
-    document.getElementById('su_joinBox').style.display=isCreate?'none':'block';
-  };
-});
-
-document.getElementById('li_btn').onclick=()=>{
-  const email=document.getElementById('li_email').value.trim();
-  const pass=document.getElementById('li_pass').value;
-  const errEl=document.getElementById('authError');
-  errEl.textContent='';
-  if(!email||!pass){errEl.textContent='Remplissez tous les champs.';return;}
-  const btn=document.getElementById('li_btn');btn.disabled=true;btn.textContent='Connexion...';
-  auth.signInWithEmailAndPassword(email,pass).catch(err=>{
-    btn.disabled=false;btn.textContent='Se connecter';
-    errEl.textContent=err.code==='auth/invalid-credential'||err.code==='auth/wrong-password'||err.code==='auth/user-not-found'?'Email ou mot de passe incorrect.':'Erreur : '+err.message;
-  });
-};
-document.getElementById('li_pass').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('li_btn').onclick();});
-
-let authFlowManual=false;
-document.getElementById('su_btn').onclick=async()=>{
-  const name=document.getElementById('su_name').value.trim();
-  const email=document.getElementById('su_email').value.trim();
-  const pass=document.getElementById('su_pass').value;
-  const isCreate=document.querySelector('input[name="cotype"]:checked').value==='create';
-  const coname=document.getElementById('su_coname').value.trim();
-  const cocode=document.getElementById('su_cocode').value.trim().toUpperCase();
-  const errEl=document.getElementById('authError2');
-  errEl.textContent='';
-  if(!name||!email||!pass){errEl.textContent='Remplissez tous les champs.';return;}
-  if(pass.length<6){errEl.textContent='Le mot de passe doit contenir au moins 6 caractères.';return;}
-  if(isCreate&&!coname){errEl.textContent="Indiquez le nom de l'entreprise.";return;}
-  if(!isCreate&&!cocode){errEl.textContent="Indiquez le code entreprise.";return;}
-  const btn=document.getElementById('su_btn');btn.disabled=true;btn.textContent='Création...';
-  authFlowManual=true;
-  const timeoutGuard=setTimeout(()=>{
-    if(btn.disabled){btn.disabled=false;btn.textContent='Créer le compte';errEl.textContent="La création prend trop de temps. Vérifiez votre connexion et réessayez.";authFlowManual=false;}
-  },15000);
-  try{
-    let targetCompanyId=null;
-    if(!isCreate){
-      const q=await db.collection('companies').where('joinCode','==',cocode).limit(1).get();
-      if(q.empty){clearTimeout(timeoutGuard);btn.disabled=false;btn.textContent='Créer le compte';errEl.textContent='Code entreprise introuvable.';authFlowManual=false;return;}
-      targetCompanyId=q.docs[0].id;
-    }
-    const cred=await auth.createUserWithEmailAndPassword(email,pass);
-    const uidUser=cred.user.uid;
-    if(isCreate){
-      const coRef=db.collection('companies').doc();
-      targetCompanyId=coRef.id;
-      await coRef.set({name:coname,joinCode:genJoinCode(),createdAt:Date.now()});
-      // Le compte utilisateur doit être créé AVANT d'écrire les données de l'entreprise
-      // (les règles de sécurité vérifient l'appartenance via ce document utilisateur).
-      await db.collection('users').doc(uidUser).set({email,name,companyId:targetCompanyId,role:'admin'});
-      await coRef.collection('data').doc('main').set(defaultData());
-      window.CURRENT_COMPANY={name:coname,joinCode:(await coRef.get()).data().joinCode};
-    }else{
-      await db.collection('users').doc(uidUser).set({email,name,companyId:targetCompanyId,role:'membre'});
-      const coDoc=await db.collection('companies').doc(targetCompanyId).get();
-      if(coDoc.exists)window.CURRENT_COMPANY={name:coDoc.data().name,joinCode:coDoc.data().joinCode};
-    }
-    window.CURRENT_USER={uid:uidUser,email,name,role:isCreate?'admin':'membre',companyId:targetCompanyId};
-    clearTimeout(timeoutGuard);
-    authFlowManual=false;
-    subscribeToCompanyData(targetCompanyId);
-  }catch(err){
-    clearTimeout(timeoutGuard);
-    authFlowManual=false;
-    btn.disabled=false;btn.textContent='Créer le compte';
-    errEl.textContent=err.code==='auth/email-already-in-use'?'Cet email est déjà utilisé.':'Erreur : '+err.message;
-  }
-};
-
-window.logout=()=>{
-  if(confirm('Se déconnecter ?')){
-    auth.signOut().then(()=>location.reload());
-  }
-};
-
-auth.onAuthStateChanged(user=>{
-  if(authFlowManual)return; // l'inscription/connexion en cours gère déjà tout manuellement
-  if(user){
-    db.collection('users').doc(user.uid).get().then(doc=>{
-      if(!doc.exists){auth.signOut();return;}
-      const udata=doc.data();
-      window.CURRENT_USER={uid:user.uid,email:udata.email,name:udata.name,role:udata.role,companyId:udata.companyId};
-      db.collection('companies').doc(udata.companyId).get().then(coDoc=>{
-        if(coDoc.exists)window.CURRENT_COMPANY={name:coDoc.data().name,joinCode:coDoc.data().joinCode};
-      });
-      subscribeToCompanyData(udata.companyId);
-    }).catch(()=>{
-      document.getElementById('licenseGate').style.display='flex';
-    });
-  }else{
-    document.getElementById('licenseGate').style.display='flex';
-  }
-});
-
 function startApp(){
   document.getElementById('licenseGate').style.display='none';
   document.getElementById('appRoot').style.display='';
@@ -1856,6 +1677,27 @@ function startApp(){
   };
   setInterval(()=>{const el=document.getElementById('clock');if(el)el.textContent=new Date().toLocaleString('fr-FR');},1000);
   render();
+}
+const savedLicense=localStorage.getItem('zaktech_license');
+if(savedLicense&&LICENSE_CODES.hasOwnProperty(savedLicense)){
+  startApp();
+}else{
+  document.getElementById('licenseGate').style.display='flex';
+  const tryActivate=()=>{
+    const el=document.getElementById('licenseInput');
+    const val=el.value.trim().toUpperCase();
+    el.classList.remove('invalid');
+    if(LICENSE_CODES.hasOwnProperty(val)){
+      localStorage.setItem('zaktech_license',val);
+      startApp();
+    }else{
+      el.classList.add('invalid');
+      toast('Code invalide','warn');
+    }
+  };
+  document.getElementById('licenseBtn').onclick=tryActivate;
+  document.getElementById('licenseInput').addEventListener('keydown',e=>{if(e.key==='Enter')tryActivate();});
+  document.getElementById('licenseInput').focus();
 }
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
