@@ -1,0 +1,93 @@
+========================================================
+ ZAKTECH ERP — Version Web installable (PC + Mobile)
+========================================================
+
+Ce dossier contient une VERSION WEB de ZAKTECH ERP qui s'installe
+comme une vraie application, sur ordinateur ET sur téléphone
+(Android et iPhone), sans passer par Google Play ou l'App Store.
+
+C'est la solution la plus simple et la plus fiable — beaucoup
+moins fragile que la compilation en .exe qu'on a essayée avant.
+
+--------------------------------------------------------
+ÉTAPE 1 — Mettre le site en ligne (gratuit, 5 minutes)
+--------------------------------------------------------
+Vous avez déjà un compte GitHub (créé pour l'essai du .exe).
+On va l'utiliser pour héberger gratuitement cette version web
+avec "GitHub Pages".
+
+1. Sur github.com, cliquez sur "+" en haut à droite → "New repository"
+2. Nom : zaktech-erp-app
+3. Cochez "Public"
+4. Cliquez sur "Create repository"
+5. Cliquez sur "uploading an existing file"
+6. Glissez-déposez TOUS les fichiers de ce dossier
+   (index.html, manifest.json, service-worker.js, icon-192.png,
+   icon-512.png)
+7. Cliquez sur "Commit changes"
+
+8. Allez dans l'onglet "Settings" (Paramètres) du dépôt
+9. Dans le menu de gauche, cliquez sur "Pages"
+10. Sous "Branch", choisissez "main" et "/ (root)", puis "Save"
+11. Attendez 1-2 minutes, puis rechargez la page : une adresse
+    apparaît en haut, du style :
+       https://VOTRE-NOM.github.io/zaktech-erp-app/
+    C'est l'adresse de votre application !
+
+--------------------------------------------------------
+ÉTAPE 2 — Installer sur MOBILE (Android)
+--------------------------------------------------------
+1. Ouvrez l'adresse ci-dessus dans Chrome sur le téléphone
+2. Appuyez sur les 3 points en haut à droite (⋮)
+3. "Ajouter à l'écran d'accueil" (ou "Installer l'application")
+4. Confirmez
+
+→ Une icône ZAKTECH ERP apparaît sur l'écran d'accueil, comme
+  une vraie application. Elle s'ouvre en plein écran, sans la
+  barre d'adresse de Chrome, et fonctionne même hors connexion
+  une fois ouverte une première fois.
+
+--------------------------------------------------------
+ÉTAPE 3 — Installer sur iPhone (Safari)
+--------------------------------------------------------
+1. Ouvrez l'adresse dans Safari (pas Chrome — sur iPhone, ça
+   doit être Safari)
+2. Appuyez sur le bouton "Partager" (carré avec une flèche)
+3. "Sur l'écran d'accueil"
+4. Confirmez
+
+--------------------------------------------------------
+ÉTAPE 4 — Installer sur ORDINATEUR (Windows/Mac)
+--------------------------------------------------------
+1. Ouvrez l'adresse dans Chrome ou Edge
+2. Une icône d'installation apparaît dans la barre d'adresse
+   (à droite, ressemble à un écran avec une flèche) — cliquez
+3. "Installer"
+
+→ L'application s'ouvre dans sa propre fenêtre, avec une icône
+  dans le menu Démarrer / le Dock, exactement comme un logiciel
+  installé classiquement. C'est cette solution qui remplace le
+  .exe qu'on essayait de compiler.
+
+--------------------------------------------------------
+POUR LA VENTE / DISTRIBUTION À VOS CLIENTS
+--------------------------------------------------------
+Une fois en ligne, il suffit de partager le lien
+(https://VOTRE-NOM.github.io/zaktech-erp-app/) à vos clients
+par WhatsApp, SMS ou QR code. Ils suivent l'étape 2, 3 ou 4
+selon leur appareil, et ont l'application installée en 30
+secondes — sans magasin d'application, sans compte à créer,
+sans compilation.
+
+Chaque client a ses PROPRES données (stockées sur son appareil),
+comme s'il avait installé un logiciel séparé.
+
+--------------------------------------------------------
+METTRE À JOUR L'APPLICATION PLUS TARD
+--------------------------------------------------------
+Si vous modifiez l'application (nouvelle fonctionnalité), il
+suffit de renvoyer le nouveau fichier "index.html" sur GitHub
+(bouton crayon ✏️ sur le fichier → coller le nouveau contenu →
+Commit changes). Tous les utilisateurs reçoivent la mise à jour
+automatiquement la prochaine fois qu'ils ouvrent l'application
+avec internet.
